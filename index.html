@@ -1,0 +1,2972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BookBrain — Memory Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root {
+  --bg: #080809;
+  --surface: #111115;
+  --surface2: #18181e;
+  --surface3: #222228;
+  --surface4: #2c2c35;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --gold: #d4a843;
+  --gold-dim: rgba(212,168,67,0.15);
+  --gold-glow: rgba(212,168,67,0.08);
+  --sage: #6aaa8a;
+  --sage-dim: rgba(106,170,138,0.12);
+  --rose: #b06070;
+  --rose-dim: rgba(176,96,112,0.12);
+  --blue: #5b80b8;
+  --blue-dim: rgba(91,128,184,0.12);
+  --text: #ede8e0;
+  --muted: rgba(237,232,224,0.42);
+  --muted2: rgba(237,232,224,0.22);
+  --danger: #c05050;
+  --danger-dim: rgba(192,80,80,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Geist', system-ui, sans-serif;
+  --nav-h: 68px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;font-size:15px;line-height:1.5}
+
+/* Ambient */
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 10%, rgba(212,168,67,0.045) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(106,170,138,0.035) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 70% 15%, rgba(176,96,112,0.025) 0%, transparent 70%)
+}
+
+/* Layout */
+.app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,8,9,0.88);backdrop-filter:blur(16px);
+}
+.logo{
+  font-family:var(--font-display);font-size:1.2rem;color:var(--gold);
+  letter-spacing:-0.01em;display:flex;align-items:center;gap:7px;
+}
+.logo-mark{font-size:1.1rem}
+.header-right{display:flex;align-items:center;gap:8px}
+.header-badge{
+  font-size:0.62rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  background:var(--gold-dim);border:1px solid rgba(212,168,67,0.25);
+  color:var(--gold);padding:3px 9px;border-radius:20px;
+}
+
+main{flex:1;padding:0 16px 20px;max-width:660px;margin:0 auto;width:100%;padding-bottom:calc(var(--nav-h) + 20px)}
+
+/* Screens */
+.screen{display:none;animation:fadeUp 0.3s ease}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border:none;border-radius:var(--radius-sm);cursor:pointer;
+  font-family:var(--font-body);font-weight:500;font-size:0.88rem;
+  transition:all 0.18s;outline:none;
+}
+.btn-primary{
+  background:var(--gold);color:#0a0a0a;padding:12px 22px;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(212,168,67,0.28)}
+.btn-secondary{
+  background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  padding:11px 20px;
+}
+.btn-secondary:hover{background:var(--surface3);border-color:var(--border2)}
+.btn-ghost{background:none;border:none;color:var(--muted);padding:8px;cursor:pointer;border-radius:8px;transition:all 0.18s;font-family:var(--font-body)}
+.btn-ghost:hover{color:var(--text);background:var(--surface2)}
+.btn-icon{
+  width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);
+  color:var(--muted);border-radius:9px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:0.95rem;
+  transition:all 0.18s;
+}
+.btn-icon:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
+
+/* Typography */
+.eyebrow{
+  font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:10px;
+}
+.display-title{
+  font-family:var(--font-display);font-size:clamp(1.8rem,5.5vw,2.4rem);
+  font-weight:400;line-height:1.15;letter-spacing:-0.02em;
+  margin-bottom:10px;
+}
+.display-title em{font-style:italic;color:var(--gold)}
+.section-label{
+  font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:12px;
+}
+
+/* Cards */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  transition:border-color 0.2s;
+}
+.card:hover{border-color:var(--border2)}
+.card-padded{padding:16px 18px}
+
+/* Pills */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 11px;font-size:0.72rem;font-weight:500;
+  cursor:pointer;transition:all 0.18s;
+}
+.pill:hover,.pill.active{background:var(--gold-dim);border-color:rgba(212,168,67,0.3);color:var(--gold)}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:18px 0}
+
+/* ── UPLOAD / LIBRARY ── */
+.hero{padding:36px 0 28px;text-align:center}
+.hero-sub{color:var(--muted);font-size:0.9rem;line-height:1.65;max-width:380px;margin:0 auto}
+
+.drop-zone{
+  border:1.5px dashed rgba(212,168,67,0.2);border-radius:var(--radius);
+  padding:40px 24px;text-align:center;cursor:pointer;
+  transition:all 0.22s;background:var(--gold-glow);margin:20px 0;
+}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--gold);background:rgba(212,168,67,0.06)}
+.drop-icon{font-size:2.4rem;margin-bottom:10px;display:block}
+.drop-title{font-family:var(--font-display);font-size:1.1rem;margin-bottom:4px}
+.drop-sub{color:var(--muted);font-size:0.82rem}
+.drop-or{color:var(--muted2);font-size:0.75rem;margin:14px 0}
+#file-input{display:none}
+
+.book-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all 0.2s;margin-bottom:9px;
+}
+.book-card:hover{background:var(--surface2);border-color:var(--border2);transform:translateY(-1px)}
+.book-spine{
+  width:40px;height:52px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;
+}
+.book-info{flex:1;min-width:0}
+.book-name{font-weight:500;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-meta{color:var(--muted);font-size:0.74rem;margin-top:2px;display:flex;align-items:center;gap:8px}
+.book-progress{height:2px;background:var(--surface3);border-radius:2px;margin-top:7px;overflow:hidden}
+.book-progress-fill{height:100%;border-radius:2px;background:var(--sage)}
+
+/* Memory state chips on book cards */
+.mem-chip{
+  font-size:0.62rem;font-weight:600;padding:2px 7px;border-radius:10px;
+  letter-spacing:0.04em;white-space:nowrap;
+}
+.chip-risk{background:rgba(192,80,80,0.15);color:#d07070;border:1px solid rgba(192,80,80,0.25)}
+.chip-due{background:rgba(212,168,67,0.12);color:var(--gold);border:1px solid rgba(212,168,67,0.2)}
+.chip-stable{background:rgba(106,170,138,0.12);color:var(--sage);border:1px solid rgba(106,170,138,0.2)}
+.chip-new{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(91,128,184,0.2)}
+
+/* ── INTENT / COMPRESSION SCREEN ── */
+.intent-book-banner{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;display:flex;gap:12px;align-items:center;margin-bottom:24px;
+}
+.intent-book-thumb{
+  width:46px;height:46px;background:var(--surface2);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;
+}
+.intent-q{
+  font-family:var(--font-display);font-size:1.45rem;font-weight:400;
+  line-height:1.25;margin-bottom:6px;letter-spacing:-0.015em;
+}
+.intent-sub{color:var(--muted);font-size:0.85rem;margin-bottom:20px}
+
+.compress-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.compress-btn{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px 14px;cursor:pointer;transition:all 0.2s;text-align:left;
+  display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;
+}
+.compress-btn::after{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.2s;
+  background:radial-gradient(ellipse at 30% 30%,rgba(212,168,67,0.1),transparent 70%);
+}
+.compress-btn:hover{border-color:var(--border2);transform:translateY(-1px)}
+.compress-btn:hover::after{opacity:1}
+.compress-btn.active,.compress-btn:hover{border-color:rgba(212,168,67,0.35)}
+.compress-time{
+  font-size:0.64rem;font-weight:600;color:var(--gold);
+  background:var(--gold-dim);padding:2px 7px;border-radius:8px;
+  display:inline-flex;width:fit-content;letter-spacing:0.04em;
+}
+.compress-title{font-weight:600;font-size:0.9rem;margin-top:2px}
+.compress-desc{font-size:0.75rem;color:var(--muted);line-height:1.4}
+.compress-memory{font-size:0.7rem;color:var(--sage);margin-top:2px}
+
+.profile-row{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
+.profile-chip{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:6px 13px;font-size:0.77rem;font-weight:500;cursor:pointer;transition:all 0.18s;
+}
+.profile-chip.active{background:var(--gold-dim);border-color:rgba(212,168,67,0.35);color:var(--gold)}
+
+/* ── LOADING ── */
+.loading-wrap{text-align:center;padding:52px 20px}
+.loading-icon{font-size:2.8rem;margin-bottom:18px;display:block;animation:float 2.5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+.loading-title{font-family:var(--font-display);font-size:1.35rem;margin-bottom:6px}
+.loading-sub{color:var(--muted);font-size:0.85rem;margin-bottom:28px}
+.loading-steps{display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto;text-align:left}
+.loading-step{
+  display:flex;gap:10px;align-items:center;font-size:0.82rem;color:var(--muted);
+  padding:9px 13px;background:var(--surface);border-radius:9px;border:1px solid var(--border);transition:all 0.4s;
+}
+.loading-step.done{color:var(--sage);border-color:rgba(106,170,138,0.28);background:rgba(106,170,138,0.05)}
+.loading-step.active{color:var(--text);border-color:rgba(212,168,67,0.28);background:rgba(212,168,67,0.05)}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--surface3);flex-shrink:0;transition:all 0.3s}
+.loading-step.done .step-dot{background:var(--sage)}
+.loading-step.active .step-dot{background:var(--gold);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.6)}}
+
+/* ── RESULTS / MEMORY BRIEF SCREEN ── */
+.results-header{padding:22px 0 18px}
+.results-title{font-family:var(--font-display);font-size:1.4rem;font-weight:400;margin-bottom:4px;letter-spacing:-0.015em}
+.results-meta{color:var(--muted);font-size:0.78rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Memory Brief — the primary artifact */
+.memory-brief{
+  background:var(--surface);border:1px solid rgba(212,168,67,0.2);
+  border-radius:var(--radius);padding:20px;margin-bottom:14px;
+}
+.mb-label{font-size:0.66rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.mb-thesis{
+  font-family:var(--font-display);font-size:1.1rem;line-height:1.5;
+  border-left:2px solid var(--gold);padding-left:14px;margin-bottom:16px;color:var(--text);
+}
+.mb-section{margin-bottom:14px}
+.mb-section-head{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px}
+.mb-idea{
+  background:var(--surface2);border-radius:9px;padding:11px 13px;
+  margin-bottom:7px;font-size:0.85rem;line-height:1.55;display:flex;gap:10px;align-items:flex-start;
+}
+.mb-idea-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-gold{background:var(--gold)}
+.dot-rose{background:var(--rose)}
+.dot-sage{background:var(--sage)}
+.mb-confusion{
+  background:rgba(176,96,112,0.07);border:1px solid rgba(176,96,112,0.18);
+  border-radius:9px;padding:11px 13px;margin-bottom:7px;font-size:0.83rem;line-height:1.5;
+}
+.mb-confusion-label{font-size:0.65rem;font-weight:700;color:var(--rose);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.mb-trigger{
+  background:rgba(106,170,138,0.07);border:1px solid rgba(106,170,138,0.18);
+  border-radius:9px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;
+}
+.mb-trigger-icon{font-size:1.2rem;flex-shrink:0}
+.mb-trigger-text{font-size:0.85rem;line-height:1.5}
+.mb-load{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.mb-load-label{font-size:0.74rem;color:var(--muted)}
+.mb-load-val{font-size:0.74rem;font-weight:600;color:var(--gold)}
+.mb-action-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+.mb-cta{
+  flex:1;min-width:120px;background:var(--gold);color:#0a0a0a;
+  border:none;border-radius:10px;padding:12px 16px;font-family:var(--font-body);
+  font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.18s;text-align:center;
+}
+.mb-cta:hover{box-shadow:0 6px 22px rgba(212,168,67,0.28)}
+.mb-cta-sec{
+  flex:1;min-width:100px;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:10px;padding:12px 16px;
+  font-family:var(--font-body);font-size:0.85rem;font-weight:500;cursor:pointer;transition:all 0.18s;text-align:center;
+}
+.mb-cta-sec:hover{background:var(--surface3)}
+
+/* NTR classifier */
+.ntr-row{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}
+.ntr-tab{
+  font-size:0.78rem;font-weight:600;padding:6px 13px;border-radius:20px;cursor:pointer;transition:all 0.18s;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);
+}
+.ntr-tab.active-must{background:var(--gold-dim);border-color:rgba(212,168,67,0.3);color:var(--gold)}
+.ntr-tab.active-nice{background:var(--sage-dim);border-color:rgba(106,170,138,0.28);color:var(--sage)}
+.ntr-tab.active-ref{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+
+.idea-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:9px;transition:all 0.2s;
+}
+.idea-card:hover{border-color:var(--border2)}
+.idea-card-top{display:flex;align-items:flex-start;gap:10px}
+.idea-tier{
+  font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:8px;
+  letter-spacing:0.05em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-top:2px;
+}
+.tier-must{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,168,67,0.2)}
+.tier-nice{background:var(--sage-dim);color:var(--sage);border:1px solid rgba(106,170,138,0.2)}
+.tier-ref{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.idea-text{font-size:0.87rem;line-height:1.55;flex:1}
+.idea-card-actions{display:flex;gap:6px;margin-top:10px}
+.idea-action-btn{
+  font-size:0.72rem;font-weight:500;padding:4px 10px;border-radius:8px;cursor:pointer;transition:all 0.18s;
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+}
+.idea-action-btn:hover{color:var(--text);border-color:var(--border2)}
+
+/* Collapsible sections for supporting artifacts */
+.artifact-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:9px;overflow:hidden;
+}
+.artifact-header{
+  padding:13px 16px;display:flex;align-items:center;gap:9px;cursor:pointer;
+  user-select:none;transition:background 0.2s;
+}
+.artifact-header:hover{background:var(--surface2)}
+.artifact-icon{font-size:1rem;flex-shrink:0}
+.artifact-title{font-weight:500;font-size:0.87rem;flex:1}
+.artifact-badge{font-size:0.65rem;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:8px}
+.artifact-toggle{color:var(--muted);font-size:0.8rem;transition:transform 0.2s}
+.artifact-card.open .artifact-toggle{transform:rotate(180deg)}
+.artifact-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease,padding 0.2s}
+.artifact-card.open .artifact-body{max-height:2000px;padding:0 16px 16px}
+
+/* ── MEMORY HUB (Study) ── */
+.hub-header{padding:22px 0 18px}
+.hub-title{font-family:var(--font-display);font-size:1.5rem;font-weight:400;margin-bottom:3px;letter-spacing:-0.015em}
+.hub-sub{color:var(--muted);font-size:0.84rem}
+
+/* Memory state summary */
+.mem-state-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.mem-stat{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:12px 10px;text-align:center;
+}
+.mem-stat-n{font-family:var(--font-display);font-size:1.5rem;font-weight:400;line-height:1}
+.mem-stat-l{font-size:0.65rem;color:var(--muted);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em}
+.mem-stat.urgent .mem-stat-n{color:var(--gold)}
+.mem-stat.weak .mem-stat-n{color:var(--rose)}
+.mem-stat.stable .mem-stat-n{color:var(--sage)}
+
+/* Primary action card */
+.prime-action{
+  background:var(--surface);border:1px solid rgba(212,168,67,0.18);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px;
+}
+.prime-action-label{font-size:0.66rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.prime-action-title{font-family:var(--font-display);font-size:1.1rem;margin-bottom:4px}
+.prime-action-sub{font-size:0.8rem;color:var(--muted);margin-bottom:14px;line-height:1.5}
+.prime-action-why{
+  font-size:0.75rem;color:var(--muted);background:var(--surface2);
+  border-radius:8px;padding:8px 11px;margin-bottom:14px;line-height:1.5;
+  border-left:2px solid rgba(212,168,67,0.35);padding-left:11px;
+}
+
+/* Session type cards */
+.session-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.session-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 12px;cursor:pointer;transition:all 0.2s;
+}
+.session-card:hover{background:var(--surface2);border-color:var(--border2);transform:translateY(-1px)}
+.session-card.highlight{border-color:rgba(212,168,67,0.25);background:rgba(212,168,67,0.04)}
+.session-icon{font-size:1.3rem;margin-bottom:6px}
+.session-name{font-weight:600;font-size:0.85rem;margin-bottom:3px}
+.session-meta{font-size:0.73rem;color:var(--muted);line-height:1.4}
+.session-badge{
+  display:inline-block;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:6px;
+  background:var(--danger-dim);color:var(--danger);border:1px solid rgba(192,80,80,0.2);
+  margin-top:5px;
+}
+
+/* Deck cards */
+.deck-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all 0.2s;margin-bottom:9px;
+}
+.deck-card:hover{background:var(--surface2);border-color:var(--border2)}
+.deck-emoji{font-size:1.5rem;flex-shrink:0}
+.deck-info{flex:1;min-width:0}
+.deck-name{font-weight:500;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck-meta{font-size:0.74rem;color:var(--muted);margin-top:2px}
+.deck-bar{height:2px;background:var(--surface3);border-radius:2px;margin-top:7px;overflow:hidden}
+.deck-bar-fill{height:100%;border-radius:2px;background:var(--sage)}
+.deck-due{
+  font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:8px;flex-shrink:0;
+  background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,168,67,0.2);
+}
+
+/* Leitner boxes */
+.leitner-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.leitner-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.leitner-title{font-size:0.8rem;font-weight:600}
+.leitner-boxes{display:flex;gap:7px;align-items:flex-end;height:80px}
+.leitner-box{
+  flex:1;border-radius:8px 8px 5px 5px;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;padding:7px 4px;cursor:pointer;
+  transition:all 0.3s ease;position:relative;min-height:24px;border:1px solid rgba(255,255,255,0.05);
+}
+.leitner-box:hover{filter:brightness(1.2);transform:translateY(-2px)}
+.leitner-cnt{font-size:0.82rem;font-weight:800;color:white;line-height:1}
+.leitner-lbl{font-size:0.55rem;color:rgba(255,255,255,0.45);margin-top:3px;text-align:center}
+.lb1{background:linear-gradient(180deg,rgba(192,80,80,0.55),rgba(160,55,55,0.8))}
+.lb2{background:linear-gradient(180deg,rgba(212,140,55,0.55),rgba(175,110,35,0.8))}
+.lb3{background:linear-gradient(180deg,rgba(190,190,55,0.55),rgba(155,155,35,0.8))}
+.lb4{background:linear-gradient(180deg,rgba(100,185,115,0.55),rgba(70,150,85,0.8))}
+.lb5{background:linear-gradient(180deg,rgba(75,150,210,0.55),rgba(48,115,175,0.8))}
+
+/* Forgetting curve */
+.curve-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.curve-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.curve-title{font-size:0.8rem;font-weight:600}
+.curve-row{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;
+  background:var(--surface2);border-radius:9px;border:1px solid var(--border);margin-bottom:6px;
+}
+.curve-name{flex:1;font-size:0.78rem;font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.curve-bar{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.curve-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+.curve-pct{font-size:0.7rem;font-weight:700;width:30px;text-align:right;flex-shrink:0}
+.risk-badge{
+  font-size:0.6rem;font-weight:700;padding:2px 6px;border-radius:6px;flex-shrink:0;
+}
+.risk-due{background:rgba(192,80,80,0.14);color:#c07070;border:1px solid rgba(192,80,80,0.25)}
+.risk-ok{background:rgba(106,170,138,0.12);color:var(--sage);border:1px solid rgba(106,170,138,0.2)}
+.risk-soon{background:rgba(212,168,67,0.12);color:var(--gold);border:1px solid rgba(212,168,67,0.2)}
+
+/* Heatmap */
+.heatmap-wrap{margin:14px 0}
+.heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.heatmap-cell{aspect-ratio:1;border-radius:3px;background:var(--surface2);transition:all 0.2s}
+.heatmap-cell.l1{background:rgba(176,96,112,0.22)}
+.heatmap-cell.l2{background:rgba(176,96,112,0.44)}
+.heatmap-cell.l3{background:rgba(176,96,112,0.66)}
+.heatmap-cell.l4{background:rgba(176,96,112,0.9)}
+.streak-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.streak-num{font-family:var(--font-display);font-size:1.6rem;color:var(--gold)}
+.streak-label{font-size:0.78rem;color:var(--muted)}
+
+/* ── STUDY CARD SCREEN ── */
+.study-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;
+}
+.study-back{font-size:0.82rem;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:color 0.2s}
+.study-back:hover{color:var(--text)}
+.study-info{font-size:0.78rem;color:var(--muted)}
+.study-progress{height:2px;background:var(--surface2);border-radius:2px;margin-bottom:20px;overflow:hidden}
+.study-progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.4s ease}
+
+.recall-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:28px 22px;min-height:220px;position:relative;overflow:hidden;margin-bottom:16px;
+}
+.recall-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--sage),var(--gold));
+}
+.recall-cat{font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sage);margin-bottom:10px}
+.recall-q{font-family:var(--font-display);font-size:1.15rem;font-weight:400;line-height:1.5;margin-bottom:0}
+.recall-hint{font-size:0.72rem;color:var(--muted);margin-top:16px}
+.recall-answer{
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:14px;
+}
+.recall-answer-label{font-size:0.66rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.recall-answer-text{font-size:0.9rem;line-height:1.6}
+.recall-detail{font-size:0.82rem;color:var(--muted);line-height:1.55;margin-top:8px}
+.recall-example{
+  background:var(--blue-dim);border:1px solid rgba(91,128,184,0.2);border-radius:9px;
+  padding:10px 13px;font-size:0.8rem;line-height:1.5;margin-top:9px;font-style:italic;
+}
+
+.recall-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.recall-btn{
+  padding:13px 10px;border-radius:12px;border:1px solid var(--border);
+  font-family:var(--font-body);font-size:0.8rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--surface);
+}
+.recall-btn .rb-label{font-size:0.68rem;color:var(--muted);font-weight:400;margin-top:1px}
+.recall-btn.rb-easy:hover,.recall-btn.rb-easy.selected{background:rgba(106,170,138,0.12);border-color:rgba(106,170,138,0.3);color:var(--sage)}
+.recall-btn.rb-hard:hover,.recall-btn.rb-hard.selected{background:var(--danger-dim);border-color:rgba(192,80,80,0.3);color:var(--danger)}
+.recall-btn.rb-ok:hover,.recall-btn.rb-ok.selected{background:var(--gold-dim);border-color:rgba(212,168,67,0.3);color:var(--gold)}
+
+.study-tip{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:10px 13px;font-size:0.78rem;color:var(--muted);line-height:1.5;margin-bottom:12px;
+  border-left:2px solid rgba(91,128,184,0.4);
+}
+
+/* Cloze card */
+.cloze-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:26px 22px;min-height:200px;position:relative;margin-bottom:16px;
+}
+.cloze-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--rose));
+}
+.cloze-cat{font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.cloze-sentence{font-size:1rem;line-height:1.85;font-weight:400}
+.cloze-blank{
+  display:inline-block;min-width:100px;height:26px;
+  background:rgba(212,168,67,0.08);border-bottom:1.5px solid var(--gold);
+  border-radius:3px 3px 0 0;vertical-align:middle;margin:0 4px;cursor:pointer;
+  transition:all 0.2s;position:relative;
+}
+.cloze-blank.revealed{
+  background:rgba(212,168,67,0.12);padding:0 8px;color:var(--gold);
+  font-weight:600;display:inline-flex;align-items:center;
+}
+.cloze-ctx{font-size:0.78rem;color:var(--muted);line-height:1.55;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.cloze-btns{display:flex;gap:8px;margin-top:14px}
+.cloze-reveal{
+  flex:1;background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.25);
+  color:var(--gold);padding:11px;border-radius:11px;
+  font-family:var(--font-body);font-size:0.84rem;font-weight:600;cursor:pointer;transition:all 0.2s;
+}
+.cloze-reveal:hover{background:rgba(212,168,67,0.18)}
+.cloze-next{
+  flex:1;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:11px;border-radius:11px;
+  font-family:var(--font-body);font-size:0.84rem;font-weight:600;cursor:pointer;transition:all 0.2s;
+}
+.cloze-next:hover{background:var(--surface3)}
+
+/* MC */
+.mc-q{font-family:var(--font-display);font-size:1.15rem;font-weight:400;line-height:1.45;margin-bottom:18px}
+.mc-opts{display:flex;flex-direction:column;gap:9px;margin-bottom:18px}
+.mc-opt{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:14px 16px;cursor:pointer;transition:all 0.2s;text-align:left;
+  font-family:var(--font-body);font-size:0.86rem;color:var(--text);
+  display:flex;align-items:center;gap:11px;
+}
+.mc-opt:hover{background:var(--surface2);border-color:var(--border2)}
+.mc-opt.correct{background:rgba(106,170,138,0.1);border-color:rgba(106,170,138,0.35);color:var(--sage)}
+.mc-opt.wrong{background:rgba(192,80,80,0.08);border-color:rgba(192,80,80,0.28);color:var(--danger)}
+.mc-opt.disabled{cursor:default;pointer-events:none}
+.mc-letter{
+  width:26px;height:26px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;transition:all 0.2s;
+}
+.mc-opt.correct .mc-letter{background:var(--sage);border-color:var(--sage);color:#0a0a0a}
+.mc-opt.wrong .mc-letter{background:rgba(192,80,80,0.28);border-color:rgba(192,80,80,0.4)}
+.mc-explain{
+  background:var(--gold-glow);border:1px solid rgba(212,168,67,0.15);
+  border-radius:11px;padding:13px 15px;font-size:0.82rem;line-height:1.6;
+  display:none;margin-bottom:12px;
+}
+.mc-explain.show{display:block;animation:fadeUp 0.3s ease}
+
+/* Pre-test */
+.pretest-intro{text-align:center;padding:22px 0}
+.pretest-icon{font-size:2.4rem;margin-bottom:12px;display:block}
+.pretest-title{font-family:var(--font-display);font-size:1.3rem;margin-bottom:7px}
+.pretest-desc{color:var(--muted);font-size:0.84rem;line-height:1.6;margin-bottom:18px;max-width:330px;margin-left:auto;margin-right:auto}
+.pretest-note{
+  background:var(--blue-dim);border:1px solid rgba(91,128,184,0.2);
+  border-radius:11px;padding:13px;font-size:0.78rem;color:var(--muted);line-height:1.6;
+  text-align:left;margin-bottom:18px;
+}
+.pretest-note strong{color:rgba(150,185,225,0.85)}
+
+/* Phase selector inside study screen */
+.phase-tabs{display:none}
+.study-phases{display:none}
+
+/* Completion state */
+.complete-wrap{text-align:center;padding:40px 20px}
+.complete-icon{font-size:2.8rem;margin-bottom:16px;display:block}
+.complete-title{font-family:var(--font-display);font-size:1.4rem;margin-bottom:7px}
+.complete-sub{color:var(--muted);font-size:0.85rem;line-height:1.6;margin-bottom:24px;max-width:320px;margin-left:auto;margin-right:auto}
+.complete-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px;
+}
+.complete-stat{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px 10px;text-align:center;
+}
+.complete-stat-n{font-family:var(--font-display);font-size:1.5rem}
+.complete-stat-l{font-size:0.68rem;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em}
+
+/* ── MEMORY COACH (Chat) ── */
+.coach-header{padding:20px 0 16px}
+.coach-modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.coach-mode-btn{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:5px 12px;font-size:0.74rem;font-weight:500;cursor:pointer;
+  color:var(--muted);transition:all 0.18s;
+}
+.coach-mode-btn:hover,.coach-mode-btn.active{
+  background:var(--gold-dim);border-color:rgba(212,168,67,0.3);color:var(--gold);
+}
+
+.chat-msgs{display:flex;flex-direction:column;gap:11px;margin-bottom:13px}
+.chat-msg{
+  max-width:90%;padding:11px 14px;border-radius:15px;font-size:0.86rem;line-height:1.6;
+}
+.chat-msg.ai{
+  background:var(--surface);border:1px solid var(--border);
+  border-bottom-left-radius:4px;align-self:flex-start;
+}
+.chat-msg.user{
+  background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.2);
+  border-bottom-right-radius:4px;align-self:flex-end;
+}
+.chat-msg-from{font-size:0.67rem;color:var(--muted);margin-bottom:4px;font-weight:600;letter-spacing:0.04em}
+
+.chat-input-wrap{
+  display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:9px 11px;transition:border-color 0.2s;
+}
+.chat-input-wrap:focus-within{border-color:rgba(212,168,67,0.35)}
+.chat-input{
+  flex:1;background:none;border:none;outline:none;color:var(--text);
+  font-family:var(--font-body);font-size:0.86rem;resize:none;height:38px;line-height:1.5;
+}
+.chat-input::placeholder{color:var(--muted)}
+.chat-send{
+  background:var(--gold);color:#0a0a0a;border:none;width:34px;height:34px;
+  border-radius:9px;cursor:pointer;font-size:0.9rem;flex-shrink:0;
+  transition:all 0.2s;display:flex;align-items:center;justify-content:center;
+}
+.chat-send:hover{transform:scale(1.05)}
+
+/* ── MEMORY LAYER (Notes) ── */
+.memory-note-tabs{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.memory-note{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:15px 17px;margin-bottom:9px;
+}
+.memory-note-type{
+  font-size:0.64rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+  margin-bottom:8px;
+}
+.memory-note-text{font-size:0.87rem;line-height:1.6;color:var(--text)}
+.memory-note-book{font-size:0.72rem;color:var(--muted);margin-top:7px}
+.add-note-area{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;
+}
+.add-note-label{font-size:0.7rem;font-weight:600;color:var(--gold);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em}
+.add-note-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:11px 13px;color:var(--text);font-family:var(--font-body);font-size:0.85rem;
+  outline:none;resize:none;min-height:68px;transition:border-color 0.2s;
+}
+.add-note-input:focus{border-color:rgba(212,168,67,0.35)}
+.add-note-input::placeholder{color:var(--muted2)}
+
+/* ── SETTINGS ── */
+.settings-section{padding:22px 0}
+.settings-title{font-family:var(--font-display);font-size:1.35rem;font-weight:400;margin-bottom:20px}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px}
+.profile-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:13px;
+  padding:15px;cursor:pointer;transition:all 0.2s;text-align:center;
+}
+.profile-card:hover,.profile-card.active{border-color:rgba(212,168,67,0.3);background:var(--gold-glow)}
+.profile-emoji{font-size:1.7rem;display:block;margin-bottom:7px}
+.profile-name{font-weight:600;font-size:0.85rem}
+.profile-desc{font-size:0.73rem;color:var(--muted);margin-top:3px;line-height:1.4}
+.settings-row{
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:15px;display:flex;align-items:center;gap:12px;margin-bottom:9px;
+  cursor:pointer;transition:background 0.2s;
+}
+.settings-row:hover{background:var(--surface2)}
+.settings-row-icon{font-size:1.15rem}
+.settings-row-text{flex:1}
+.settings-row-title{font-weight:500;font-size:0.86rem}
+.settings-row-sub{font-size:0.73rem;color:var(--muted);margin-top:2px}
+.settings-row-arrow{color:var(--muted2);font-size:0.8rem}
+.toggle{width:40px;height:22px;background:var(--surface3);border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--sage)}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:3px;left:3px;transition:transform 0.2s}
+.toggle.on::after{transform:translateX(18px)}
+.api-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:11px 13px;color:var(--text);font-family:var(--font-body);font-size:0.82rem;
+  outline:none;margin-top:9px;transition:border-color 0.2s;
+}
+.api-input:focus{border-color:rgba(212,168,67,0.35)}
+.api-input::placeholder{color:var(--muted2)}
+
+/* ── NAVIGATION ── */
+nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(8,8,9,0.94);backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  display:flex;padding:8px 0 max(8px,env(safe-area-inset-bottom));height:var(--nav-h);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:6px 0;color:var(--muted2);
+  font-size:0.64rem;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;
+  transition:color 0.2s;
+}
+.nav-item.active{color:var(--gold)}
+.nav-icon{font-size:1.25rem;margin-bottom:1px}
+.nav-badge{
+  position:absolute;top:5px;right:calc(50% - 16px);
+  background:var(--danger);color:white;font-size:0.55rem;font-weight:700;
+  width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+}
+.nav-item{position:relative}
+
+/* ── EMPTY / CAUGHT UP STATES ── */
+.empty-state{text-align:center;padding:44px 20px}
+.empty-icon{font-size:2.3rem;margin-bottom:11px;display:block}
+.empty-title{font-family:var(--font-display);font-size:1.1rem;margin-bottom:6px}
+.empty-sub{color:var(--muted);font-size:0.83rem;line-height:1.6;max-width:280px;margin:0 auto}
+
+/* ── CONCEPT MAP ── */
+.concept-map-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.concept-map-title{font-size:0.8rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.concept-canvas{width:100%;position:relative;height:260px}
+.concept-node{
+  position:absolute;background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;padding:7px 11px;font-size:0.7rem;font-weight:600;
+  text-align:center;cursor:pointer;transition:all 0.25s;white-space:nowrap;z-index:2;
+}
+.concept-node:hover{transform:scale(1.1);z-index:10}
+.concept-node.center{background:var(--gold-dim);border-color:rgba(212,168,67,0.4);color:var(--gold);font-size:0.76rem;padding:9px 14px}
+.concept-node.principle{border-color:rgba(176,96,112,0.32);color:var(--rose)}
+.concept-node.tactic{border-color:rgba(106,170,138,0.32);color:var(--sage)}
+.concept-node.defense{border-color:rgba(91,128,184,0.32);color:var(--blue)}
+
+/* ── CONFUSION PAIR TRAINER ── */
+.confusion-card{
+  background:var(--surface);border:1px solid rgba(176,96,112,0.2);border-radius:var(--radius);padding:20px;margin-bottom:14px;
+}
+.confusion-card::before{
+  content:'';display:block;height:2px;background:linear-gradient(90deg,var(--rose),var(--gold));
+  border-radius:2px;margin-bottom:16px;
+}
+.confusion-label{font-size:0.66rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--rose);margin-bottom:10px}
+.confusion-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.confusion-side{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:13px}
+.confusion-side-title{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:7px}
+.confusion-side-text{font-size:0.84rem;line-height:1.5}
+.confusion-vs{
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;color:var(--rose);
+  position:absolute;left:50%;transform:translateX(-50%);
+}
+.confusion-pair-wrap{position:relative}
+
+/* Transfer / Application prompt */
+.transfer-card{
+  background:var(--surface);border:1px solid rgba(91,128,184,0.2);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px;
+}
+.transfer-card::before{
+  content:'';display:block;height:2px;background:linear-gradient(90deg,var(--blue),var(--sage));
+  border-radius:2px;margin-bottom:14px;
+}
+.transfer-label{font-size:0.66rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+.transfer-prompt{font-family:var(--font-display);font-size:1.05rem;line-height:1.5;margin-bottom:14px}
+.transfer-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-family:var(--font-body);font-size:0.85rem;
+  outline:none;resize:none;min-height:72px;transition:border-color 0.2s;
+}
+.transfer-input:focus{border-color:rgba(91,128,184,0.35)}
+.transfer-input::placeholder{color:var(--muted2)}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:86px;left:50%;transform:translateX(-50%);
+  background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  padding:9px 17px;border-radius:20px;font-size:0.82rem;font-weight:500;
+  z-index:1000;animation:fadeUp 0.2s ease;white-space:nowrap;
+  box-shadow:0 4px 22px rgba(0,0,0,0.5);
+}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.75);display:flex;align-items:flex-end;animation:fadeIn 0.2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--surface);border-radius:22px 22px 0 0;padding:22px;
+  width:100%;max-width:660px;margin:0 auto;animation:slideUp 0.3s ease;
+}
+@keyframes slideUp{from{transform:translateY(40px)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:3px;background:var(--surface4);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-family:var(--font-display);font-size:1.15rem;margin-bottom:14px}
+
+/* Elaboration prompt */
+.elab-prompt{background:rgba(176,96,112,0.06);border:1px solid rgba(176,96,112,0.18);border-radius:13px;padding:15px;margin:11px 0}
+.elab-label{font-size:0.68rem;font-weight:700;color:var(--rose);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px}
+.elab-q{font-size:0.87rem;line-height:1.6;font-style:italic}
+.elab-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:11px;color:var(--text);font-family:var(--font-body);font-size:0.84rem;
+  outline:none;resize:none;margin-top:9px;min-height:65px;transition:border-color 0.2s;
+}
+.elab-input:focus{border-color:rgba(176,96,112,0.35)}
+.elab-input::placeholder{color:var(--muted2)}
+
+/* Book completion state */
+.book-complete-banner{
+  background:linear-gradient(135deg,rgba(212,168,67,0.08),rgba(106,170,138,0.05));
+  border:1px solid rgba(212,168,67,0.2);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px;text-align:center;
+}
+.bc-icon{font-size:2rem;margin-bottom:9px;display:block}
+.bc-title{font-family:var(--font-display);font-size:1.1rem;margin-bottom:5px}
+.bc-sub{font-size:0.8rem;color:var(--muted);margin-bottom:14px}
+.bc-checklist{display:flex;flex-direction:column;gap:7px;text-align:left;margin-bottom:14px}
+.bc-check{display:flex;align-items:center;gap:9px;font-size:0.83rem}
+.bc-check-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;flex-shrink:0}
+.bc-done{background:rgba(106,170,138,0.15);color:var(--sage)}
+.bc-pending{background:var(--surface3);color:var(--muted2)}
+
+/* Memory path timeline */
+.mem-path{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.mem-path-title{font-size:0.78rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.mem-path-items{display:flex;flex-direction:column;gap:0}
+.mem-path-item{
+  display:flex;gap:12px;align-items:flex-start;padding:10px 0;
+  border-bottom:1px solid var(--border);
+}
+.mem-path-item:last-child{border-bottom:none;padding-bottom:0}
+.mpi-dot{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;margin-top:1px}
+.mpi-done{background:rgba(106,170,138,0.18);color:var(--sage);border:1px solid rgba(106,170,138,0.25)}
+.mpi-active{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,168,67,0.3)}
+.mpi-upcoming{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.mpi-info{flex:1}
+.mpi-day{font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:2px}
+.mpi-action{font-size:0.84rem;font-weight:500}
+.mpi-sub{font-size:0.75rem;color:var(--muted);margin-top:2px}
+
+/* Why resurfacing */
+.why-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:3px 9px;font-size:0.68rem;font-weight:500;color:var(--muted);margin-top:5px;
+}
+
+/* Onboarding */
+.onboard-screen{padding:36px 20px;text-align:center}
+.onboard-step{display:none}.onboard-step.active{display:block;animation:fadeUp 0.3s ease}
+.onboard-dots{display:flex;gap:6px;justify-content:center;margin-bottom:28px}
+.onboard-dot{width:6px;height:6px;border-radius:50%;background:var(--surface3);transition:all 0.25s}
+.onboard-dot.active{background:var(--gold);width:18px;border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <span class="logo-mark">◈</span>
+      BookBrain
+    </div>
+    <div class="header-right">
+      <div class="header-badge">Memory Engine</div>
+      <button class="btn-icon" onclick="showScreen('settings');setNav('settings')" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── LIBRARY ── -->
+    <div class="screen active" id="screen-library">
+      <div class="hero">
+        <div class="eyebrow">◈ Fast-Memory System</div>
+        <h1 class="display-title">Your knowledge,<br><em>permanently encoded.</em></h1>
+        <p class="hero-sub">Upload a book. Get the core ideas. Lock them into memory. Apply them — today.</p>
+      </div>
+
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <span class="drop-icon">📚</span>
+        <div class="drop-title">Drop your book here</div>
+        <div class="drop-sub">PDF or EPUB · up to 50 MB</div>
+        <div class="drop-or">— or —</div>
+        <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('file-input').click()">
+          Browse files
+        </button>
+        <input type="file" id="file-input" accept=".pdf,.epub" onchange="handleFileUpload(this)">
+      </div>
+
+      <div class="section-label" style="margin-bottom:10px">Your library</div>
+      <div id="books-list"></div>
+
+      <div style="text-align:center;padding:10px 0 4px">
+        <button class="btn btn-secondary" onclick="loadDemo()">✦ Load demo book</button>
+      </div>
+    </div>
+
+    <!-- ── COMPRESSION / INTENT ── -->
+    <div class="screen" id="screen-intent">
+      <div style="padding:24px 0 18px">
+        <div class="intent-book-banner" id="intent-banner">
+          <div class="intent-book-thumb" id="intent-emoji">📗</div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem" id="intent-book-name">Book Title</div>
+            <div style="font-size:0.76rem;color:var(--muted)" id="intent-book-author">Author</div>
+          </div>
+        </div>
+
+        <!-- API key warning banner — shown only if no key set -->
+        <div id="intent-api-warning" style="display:none;background:rgba(212,168,67,0.07);border:1px solid rgba(212,168,67,0.22);border-radius:12px;padding:13px 15px;margin-bottom:16px;display:flex;align-items:center;gap:11px;cursor:pointer" onclick="showScreen('settings');setNav('settings')">
+          <span style="font-size:1.1rem">🔑</span>
+          <div style="flex:1">
+            <div style="font-size:0.84rem;font-weight:600;color:var(--gold)">Add your Claude API key first</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px">Required to extract from your book · Tap to add in Settings</div>
+          </div>
+          <span style="color:var(--muted2);font-size:0.85rem">›</span>
+        </div>
+
+        <div class="intent-q">How fast do you<br>want to go?</div>
+        <div class="intent-sub">Each level is a different memory experience — not just a shorter read.</div>
+      </div>
+
+      <div class="compress-grid">
+        <button class="compress-btn" onclick="runExtraction('10s')">
+          <span class="compress-time">10 SEC</span>
+          <span class="compress-title">The Core Thesis</span>
+          <span class="compress-desc">The one idea that changes how you think</span>
+          <span class="compress-memory">→ Memory Brief only</span>
+        </button>
+        <button class="compress-btn" onclick="runExtraction('60s')">
+          <span class="compress-time">60 SEC</span>
+          <span class="compress-title">Sharp Snapshot</span>
+          <span class="compress-desc">Thesis + 3 non-obvious ideas</span>
+          <span class="compress-memory">→ Brief + 5 must-know cards</span>
+        </button>
+        <button class="compress-btn" onclick="runExtraction('3m')">
+          <span class="compress-time">3 MIN</span>
+          <span class="compress-title">Memory Brief</span>
+          <span class="compress-desc">Full brief + idea classification</span>
+          <span class="compress-memory">→ Brief + full deck + path</span>
+        </button>
+        <button class="compress-btn" onclick="runExtraction('7m')">
+          <span class="compress-time">7 MIN</span>
+          <span class="compress-title">Deep Encode</span>
+          <span class="compress-desc">Brief + confusion pairs + application</span>
+          <span class="compress-memory">→ Everything + transfer drills</span>
+        </button>
+      </div>
+
+      <div class="section-label">Reading as</div>
+      <div class="profile-row" id="profile-row">
+        <div class="profile-chip active" onclick="selectProfile('general',this)">General</div>
+        <div class="profile-chip" onclick="selectProfile('founder',this)">Founder</div>
+        <div class="profile-chip" onclick="selectProfile('manager',this)">Manager</div>
+        <div class="profile-chip" onclick="selectProfile('student',this)">Student</div>
+        <div class="profile-chip" onclick="selectProfile('beginner',this)">New to this</div>
+      </div>
+    </div>
+
+    <!-- ── LOADING ── -->
+    <div class="screen" id="screen-loading">
+      <div class="loading-wrap">
+        <span class="loading-icon">◈</span>
+        <div class="loading-title">Building your Memory Brief</div>
+        <div class="loading-sub" id="loading-desc">Extracting what actually matters…</div>
+        <div class="loading-steps" id="loading-steps">
+          <div class="loading-step active" id="lstep-1"><div class="step-dot"></div><span>Reading core structure</span></div>
+          <div class="loading-step" id="lstep-2"><div class="step-dot"></div><span>Scoring idea value</span></div>
+          <div class="loading-step" id="lstep-3"><div class="step-dot"></div><span>Classifying Must-Know vs. Nice-to-Know</span></div>
+          <div class="loading-step" id="lstep-4"><div class="step-dot"></div><span>Detecting confusion risks</span></div>
+          <div class="loading-step" id="lstep-5"><div class="step-dot"></div><span>Building Memory Path</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RESULTS / MEMORY BRIEF ── -->
+    <div class="screen" id="screen-results">
+      <div class="results-header">
+        <button class="btn-ghost" onclick="showScreen('library');setNav('library')" style="margin-bottom:10px;font-size:0.8rem">← Library</button>
+        <div class="results-title" id="results-title">Memory Brief</div>
+        <div class="results-meta">
+          <span id="results-compression">3-min compression</span>
+          <span>·</span>
+          <span id="results-profile">General reader</span>
+          <span>·</span>
+          <span id="results-load">Memory load: Medium</span>
+        </div>
+      </div>
+
+      <!-- Primary: Memory Brief -->
+      <div class="memory-brief" id="memory-brief-card">
+        <div class="mb-label">◈ Memory Brief</div>
+        <div class="mb-thesis" id="mb-thesis">Loading thesis…</div>
+
+        <div class="mb-section">
+          <div class="mb-section-head">3 Non-Obvious Ideas</div>
+          <div id="mb-ideas-list"></div>
+        </div>
+
+        <div class="mb-section">
+          <div class="mb-section-head">Confusion Risks — Easy to Mix Up</div>
+          <div id="mb-confusions-list"></div>
+        </div>
+
+        <div class="mb-section">
+          <div class="mb-section-head">Action Trigger</div>
+          <div class="mb-trigger" id="mb-trigger">
+            <span class="mb-trigger-icon">⚡</span>
+            <span class="mb-trigger-text" id="mb-trigger-text">Loading…</span>
+          </div>
+        </div>
+
+        <div class="mb-load">
+          <span class="mb-load-label" id="mb-load-label">Memory load: 8 must-know ideas</span>
+          <span class="mb-load-val" id="mb-remember-n">If you remember 5 things →</span>
+        </div>
+
+        <div style="margin-top:10px;font-size:0.8rem;color:var(--muted);line-height:1.5" id="mb-remember-list"></div>
+
+        <div class="mb-action-row">
+          <button class="mb-cta" onclick="startMemoryPath()">Start Memory Path →</button>
+          <button class="mb-cta-sec" onclick="goToMemoryHub()">Review later</button>
+        </div>
+      </div>
+
+      <!-- Memory Path -->
+      <div class="mem-path" id="mem-path-card">
+        <div class="mem-path-title">◈ Memory Path <span style="font-size:0.7rem;color:var(--muted);font-weight:400;margin-left:5px">— your encoding schedule</span></div>
+        <div class="mem-path-items" id="mem-path-items"></div>
+      </div>
+
+      <!-- NTR Classification -->
+      <div style="margin-bottom:14px">
+        <div class="section-label" style="margin-bottom:10px">All extracted ideas</div>
+        <div class="ntr-row">
+          <div class="ntr-tab active-must active" onclick="filterNTR('must',this)">Must Know <span id="must-count" style="opacity:0.6;font-weight:400;margin-left:3px"></span></div>
+          <div class="ntr-tab" onclick="filterNTR('nice',this)">Nice to Know <span id="nice-count" style="opacity:0.6;font-weight:400;margin-left:3px"></span></div>
+          <div class="ntr-tab" onclick="filterNTR('ref',this)">Reference <span id="ref-count" style="opacity:0.6;font-weight:400;margin-left:3px"></span></div>
+        </div>
+        <div id="ideas-list"></div>
+      </div>
+
+      <!-- Supporting artifacts (collapsed by default) -->
+      <div class="artifact-card" id="artifact-quotes">
+        <div class="artifact-header" onclick="toggleArtifact(this)">
+          <span class="artifact-icon">❝</span>
+          <span class="artifact-title">Key Quotes</span>
+          <span class="artifact-badge">Supporting artifact</span>
+          <span class="artifact-toggle">▾</span>
+        </div>
+        <div class="artifact-body" id="quotes-body"></div>
+      </div>
+      <div class="artifact-card" id="artifact-glossary">
+        <div class="artifact-header" onclick="toggleArtifact(this)">
+          <span class="artifact-icon">📖</span>
+          <span class="artifact-title">Glossary</span>
+          <span class="artifact-badge">Supporting artifact</span>
+          <span class="artifact-toggle">▾</span>
+        </div>
+        <div class="artifact-body" id="glossary-body"></div>
+      </div>
+      <div class="artifact-card" id="artifact-actions">
+        <div class="artifact-header" onclick="toggleArtifact(this)">
+          <span class="artifact-icon">⚡</span>
+          <span class="artifact-title">Action Plan</span>
+          <span class="artifact-badge">Supporting artifact</span>
+          <span class="artifact-toggle">▾</span>
+        </div>
+        <div class="artifact-body" id="actions-body"></div>
+      </div>
+    </div>
+
+    <!-- ── MEMORY HUB ── -->
+    <div class="screen" id="screen-hub">
+      <div class="hub-header">
+        <div class="hub-title" id="hub-title">Memory Hub</div>
+        <div class="hub-sub" id="hub-sub">Your daily recall command center</div>
+      </div>
+
+      <!-- Streak + heatmap -->
+      <div class="card card-padded" style="margin-bottom:14px">
+        <div class="streak-row">
+          <div class="streak-num" id="hub-streak">0</div>
+          <div class="streak-label">day streak<br><span style="font-size:0.68rem;color:var(--muted2)">Keep encoding daily</span></div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">Last 28 days</div>
+          </div>
+        </div>
+        <div class="heatmap-wrap">
+          <div class="heatmap-grid" id="heatmap-grid"></div>
+        </div>
+      </div>
+
+      <!-- Memory state -->
+      <div class="mem-state-grid">
+        <div class="mem-stat urgent"><div class="mem-stat-n" id="hub-due">0</div><div class="mem-stat-l">Due now</div></div>
+        <div class="mem-stat weak"><div class="mem-stat-n" id="hub-weak">0</div><div class="mem-stat-l">Weak</div></div>
+        <div class="mem-stat stable"><div class="mem-stat-n" id="hub-mastered">0</div><div class="mem-stat-l">Encoded</div></div>
+        <div class="mem-stat"><div class="mem-stat-n" id="hub-total">0</div><div class="mem-stat-l">Total</div></div>
+      </div>
+
+      <!-- Primary action -->
+      <div class="prime-action" id="prime-action">
+        <div class="prime-action-label">◈ Recommended now</div>
+        <div class="prime-action-title" id="prime-title">Daily Review</div>
+        <div class="prime-action-sub" id="prime-sub">8 cards due · ~4 minutes</div>
+        <div class="prime-action-why" id="prime-why">These ideas are approaching the forgetting cliff. Review now to keep them stable.</div>
+        <button class="btn btn-primary" id="prime-btn" onclick="startStudySession('due')" style="width:100%">Begin session →</button>
+      </div>
+
+      <!-- Session types -->
+      <div class="section-label">All sessions</div>
+      <div class="session-grid" id="session-grid">
+        <div class="session-card highlight" onclick="startStudySession('due')">
+          <div class="session-icon">🔁</div>
+          <div class="session-name">Daily Review</div>
+          <div class="session-meta">Spaced repetition · Due cards</div>
+          <div class="session-badge" id="due-badge">8 due</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('weak')">
+          <div class="session-icon">🆘</div>
+          <div class="session-name">Rescue Weak Ideas</div>
+          <div class="session-meta">High-value cards you're struggling with</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('pretest')">
+          <div class="session-icon">🧪</div>
+          <div class="session-name">Pre-Test</div>
+          <div class="session-meta">Test before you study — boosts encoding</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('cloze')">
+          <div class="session-icon">✏️</div>
+          <div class="session-name">Cloze Deletion</div>
+          <div class="session-meta">Fill in the blanks from memory</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('mc')">
+          <div class="session-icon">🎯</div>
+          <div class="session-name">Multiple Choice</div>
+          <div class="session-meta">Forced recall with discrimination</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('confusion')">
+          <div class="session-icon">🔀</div>
+          <div class="session-name">Confusion Trainer</div>
+          <div class="session-meta">Ideas you're most likely to mix up</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('interleave')">
+          <div class="session-icon">🎲</div>
+          <div class="session-name">Interleaved Mix</div>
+          <div class="session-meta">Random book mix — strengthens transfer</div>
+        </div>
+        <div class="session-card" onclick="startStudySession('application')">
+          <div class="session-icon">⚙️</div>
+          <div class="session-name">Application Drill</div>
+          <div class="session-meta">Use what you know in real scenarios</div>
+        </div>
+      </div>
+
+      <!-- Books with memory state -->
+      <div class="section-label" style="margin-top:4px">Library memory states</div>
+      <div id="hub-books-list"></div>
+
+      <!-- Forget risk view -->
+      <div class="curve-wrap">
+        <div class="curve-head">
+          <span class="curve-title">◈ Forget Risk Monitor</span>
+          <span style="font-size:0.7rem;color:var(--muted)">Retention %</span>
+        </div>
+        <div id="curve-list"></div>
+      </div>
+
+      <!-- Leitner boxes -->
+      <div class="leitner-wrap">
+        <div class="leitner-head">
+          <span class="leitner-title">◈ Leitner System</span>
+          <span style="font-size:0.7rem;color:var(--muted)">Box 1 = daily · Box 5 = monthly</span>
+        </div>
+        <div class="leitner-boxes" id="leitner-boxes"></div>
+      </div>
+
+      <!-- Concept map -->
+      <div class="concept-map-wrap">
+        <div class="concept-map-title">◈ Concept Map <span style="font-size:0.7rem;color:var(--muted);font-weight:400;margin-left:5px">Influence: Psychology of Persuasion</span></div>
+        <div class="concept-canvas" id="concept-canvas">
+          <svg id="concept-svg" style="position:absolute;inset:0;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STUDY CARD ── -->
+    <div class="screen" id="screen-study">
+      <div class="study-header">
+        <div class="study-back" onclick="exitStudy()">← Hub</div>
+        <div class="study-info"><span id="study-mode-name">Spaced Review</span></div>
+        <div style="font-size:0.78rem;color:var(--muted)" id="study-counter">1 / 8</div>
+      </div>
+      <div class="study-progress"><div class="study-progress-fill" id="study-bar" style="width:0%"></div></div>
+
+      <!-- Phases: read → recall → cloze → mc → pretest → complete -->
+      <div id="phase-read">
+        <div class="recall-card" id="read-card">
+          <div class="recall-cat" id="card-category">Category</div>
+          <div class="recall-q" id="card-title">Card title</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:12px" id="card-body">Loading…</div>
+          <div class="recall-example" id="card-example" style="display:none">
+            <span style="font-size:0.66rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:5px">Real-world example</span>
+            <span id="card-example-text"></span>
+          </div>
+        </div>
+        <div class="study-tip" id="memory-tip"></div>
+        <button class="btn btn-primary" onclick="goPhase('recall')" style="width:100%;margin-bottom:10px">Test recall →</button>
+        <button class="btn btn-secondary" onclick="nextCard()" style="width:100%;margin-bottom:10px">Skip to next</button>
+        <button class="btn btn-ghost" onclick="saveToMemory()" style="width:100%;font-size:0.8rem;color:var(--muted)">+ Save to memory layer</button>
+      </div>
+
+      <div id="phase-recall" style="display:none">
+        <div class="recall-card">
+          <div class="recall-cat" id="recall-category">Category</div>
+          <div class="recall-q" id="recall-q">Question loading…</div>
+          <div class="why-badge" id="recall-why">⚡ Due for review</div>
+        </div>
+        <div class="recall-answer" id="recall-reveal" style="display:none">
+          <div class="recall-answer-label">Answer</div>
+          <div class="recall-answer-text" id="recall-answer-text">Loading…</div>
+          <div class="recall-detail" id="recall-detail"></div>
+          <div class="recall-example" id="recall-example-box" style="display:none">
+            <span style="font-size:0.66rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:5px">Real-world example</span>
+            <span id="recall-example-text"></span>
+          </div>
+        </div>
+        <div id="recall-reveal-btn-wrap">
+          <button class="btn btn-primary" onclick="revealAnswer()" style="width:100%;margin-bottom:10px" id="reveal-btn">Reveal answer</button>
+        </div>
+        <div class="recall-buttons" id="recall-rating" style="display:none">
+          <button class="recall-btn rb-hard" onclick="rateCard(1)">✕<div class="rb-label">Forgot</div></button>
+          <button class="recall-btn rb-ok" onclick="rateCard(3)">~ <div class="rb-label">Almost</div></button>
+          <button class="recall-btn rb-easy" onclick="rateCard(5)">✓<div class="rb-label">Got it</div></button>
+        </div>
+        <div class="elab-prompt" id="elab-prompt" style="display:none">
+          <div class="elab-label">◈ Encode deeper</div>
+          <div class="elab-q" id="elab-q">How does this connect to something you already know?</div>
+          <textarea class="elab-input" placeholder="Write your own explanation — this strengthens encoding…" id="elab-input"></textarea>
+        </div>
+      </div>
+
+      <div id="phase-cloze" style="display:none">
+        <div class="cloze-card" id="cloze-card">
+          <div class="cloze-cat" id="cloze-cat">Category</div>
+          <div class="cloze-sentence" id="cloze-sentence">Loading…</div>
+          <div class="cloze-ctx" id="cloze-ctx"></div>
+        </div>
+        <div class="cloze-btns">
+          <button class="cloze-reveal" onclick="revealCloze()">Reveal blanks</button>
+          <button class="cloze-next" onclick="nextCloze()">Next card →</button>
+        </div>
+      </div>
+
+      <div id="phase-mc" style="display:none">
+        <div style="margin-bottom:16px">
+          <div class="mc-q" id="mc-question">Loading question…</div>
+          <div class="mc-opts" id="mc-options"></div>
+          <div class="mc-explain" id="mc-explanation"></div>
+          <button class="btn btn-secondary" onclick="nextMC()" id="mc-next-btn" style="width:100%;display:none">Next →</button>
+        </div>
+      </div>
+
+      <div id="phase-pretest-intro" style="display:none">
+        <div class="pretest-intro">
+          <span class="pretest-icon">🧪</span>
+          <div class="pretest-title">Test Yourself First</div>
+          <div class="pretest-desc">Answer what you can. Wrong answers encode the correct info deeper — this is intentional.</div>
+          <div class="pretest-note">
+            <strong>Why this works:</strong> Pre-testing creates "desirable difficulty." Your brain searches for the answer, priming itself to receive and retain the correct one. Errors become anchors for learning — not failures.
+          </div>
+          <button class="btn btn-primary" onclick="startPretestCards()" style="width:100%">Begin pre-test →</button>
+        </div>
+      </div>
+
+      <div id="phase-confusion-intro" style="display:none">
+        <div class="pretest-intro">
+          <span class="pretest-icon">🔀</span>
+          <div class="pretest-title">Confusion Trainer</div>
+          <div class="pretest-desc">Train on ideas you're most likely to mix up. The system has detected likely interference pairs for this book.</div>
+          <button class="btn btn-primary" onclick="startConfusionSession()" style="width:100%">Start confusion drill →</button>
+        </div>
+      </div>
+
+      <div id="phase-confusion" style="display:none">
+        <!-- Dynamically rendered -->
+      </div>
+
+      <div id="phase-application" style="display:none">
+        <div class="transfer-card" id="transfer-card-wrap">
+          <div class="transfer-label">◈ Application Challenge</div>
+          <div class="transfer-prompt" id="transfer-prompt">Loading prompt…</div>
+          <textarea class="transfer-input" id="transfer-answer" placeholder="Write your response — there's no right answer, only your application of the idea…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-primary" onclick="submitTransfer()" style="flex:1">Submit →</button>
+            <button class="btn btn-secondary" onclick="nextTransfer()">Skip</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="phase-complete" style="display:none">
+        <div class="complete-wrap">
+          <span class="complete-icon">◈</span>
+          <div class="complete-title">Session complete</div>
+          <div class="complete-sub" id="complete-sub">You reviewed 8 cards. 3 ideas are now stronger. 1 needs more work.</div>
+          <div class="complete-stats" id="complete-stats">
+            <div class="complete-stat"><div class="complete-stat-n" id="cs-correct">0</div><div class="complete-stat-l">Recalled</div></div>
+            <div class="complete-stat"><div class="complete-stat-n" id="cs-hard">0</div><div class="complete-stat-l">Needs work</div></div>
+            <div class="complete-stat"><div class="complete-stat-n" id="cs-streak">0</div><div class="complete-stat-l">Streak</div></div>
+          </div>
+          <button class="btn btn-primary" onclick="exitStudy()" style="width:100%;margin-bottom:9px">Back to hub →</button>
+          <button class="btn btn-secondary" onclick="startStudySession('weak')" style="width:100%">Rescue weak ideas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MEMORY LAYER (Notes) ── -->
+    <div class="screen" id="screen-memory">
+      <div style="padding:22px 0 16px">
+        <div class="eyebrow">◈ Memory Layer</div>
+        <div class="display-title" style="font-size:1.4rem">Captured thinking</div>
+        <div style="color:var(--muted);font-size:0.84rem;margin-top:2px">Self-explanations, teach-backs, application notes</div>
+      </div>
+
+      <div class="add-note-area">
+        <div class="add-note-label">Add a memory note</div>
+        <div style="display:flex;gap:7px;margin-bottom:9px">
+          <select id="note-type-select" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:var(--font-body);font-size:0.8rem;outline:none;cursor:pointer">
+            <option value="self-explain">Self-Explanation</option>
+            <option value="teach-back">Teach-Back</option>
+            <option value="application">Application Note</option>
+            <option value="confusion">Confusion Note</option>
+            <option value="decision">Decision Use</option>
+          </select>
+        </div>
+        <textarea class="add-note-input" id="note-input" placeholder="Write a note — explain it in your own words, describe how you'd use it, or note what confuses you…"></textarea>
+        <button class="btn btn-primary" onclick="saveMemoryNote()" style="margin-top:9px;width:100%">Save to memory →</button>
+      </div>
+
+      <div class="memory-note-tabs">
+        <div class="pill active" onclick="filterNotes('all',this)">All</div>
+        <div class="pill" onclick="filterNotes('self-explain',this)">Self-Explain</div>
+        <div class="pill" onclick="filterNotes('teach-back',this)">Teach-Back</div>
+        <div class="pill" onclick="filterNotes('application',this)">Application</div>
+        <div class="pill" onclick="filterNotes('confusion',this)">Confusion</div>
+      </div>
+
+      <div id="memory-notes-list"></div>
+
+      <div class="empty-state" id="memory-empty" style="display:none">
+        <span class="empty-icon">◈</span>
+        <div class="empty-title">No memory notes yet</div>
+        <div class="empty-sub">Write in your own words — it's the fastest path to encoding.</div>
+      </div>
+    </div>
+
+    <!-- ── MEMORY COACH (Chat) ── -->
+    <div class="screen" id="screen-coach">
+      <div class="coach-header">
+        <div class="eyebrow">◈ Memory Coach</div>
+        <div class="display-title" style="font-size:1.4rem">Ask, challenge, apply</div>
+        <div style="color:var(--muted);font-size:0.83rem;margin-bottom:14px">Not a book chatbot. A coach for your memory.</div>
+        <div class="coach-modes" id="coach-modes">
+          <div class="coach-mode-btn" onclick="useCoachMode('quiz')">Quiz me on weak ideas</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('simplify')">Simplify this</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('misremember')">What will I misremember?</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('scenario')">Real-world scenario</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('contrast')">Contrast two ideas</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('teach')">Help me teach this back</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('apply')">Apply to my work</div>
+          <div class="coach-mode-btn" onclick="useCoachMode('rescue')">Rescue a weak concept</div>
+        </div>
+      </div>
+
+      <div class="chat-msgs" id="chat-messages"></div>
+
+      <div class="chat-input-wrap">
+        <textarea class="chat-input" id="chat-input" placeholder="Ask your coach…" rows="1" onkeydown="handleChatKey(event)"></textarea>
+        <button class="chat-send" onclick="sendChat()">↑</button>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="screen" id="screen-settings">
+      <div class="settings-section">
+        <div class="settings-title">Settings</div>
+
+        <div class="section-label">Reader profile</div>
+        <div class="profile-grid">
+          <div class="profile-card active" id="profile-general" onclick="setProfile('general')">
+            <span class="profile-emoji">📚</span>
+            <div class="profile-name">General</div>
+            <div class="profile-desc">Balanced extraction</div>
+          </div>
+          <div class="profile-card" id="profile-founder" onclick="setProfile('founder')">
+            <span class="profile-emoji">🚀</span>
+            <div class="profile-name">Founder</div>
+            <div class="profile-desc">Strategy & decision-focus</div>
+          </div>
+          <div class="profile-card" id="profile-manager" onclick="setProfile('manager')">
+            <span class="profile-emoji">🎯</span>
+            <div class="profile-name">Manager</div>
+            <div class="profile-desc">People & execution focus</div>
+          </div>
+          <div class="profile-card" id="profile-student" onclick="setProfile('student')">
+            <span class="profile-emoji">🎓</span>
+            <div class="profile-name">Student</div>
+            <div class="profile-desc">Concept precision focus</div>
+          </div>
+        </div>
+
+        <div class="section-label">API key</div>
+        <div class="settings-row" style="cursor:default">
+          <div class="settings-row-icon">🔑</div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Claude API Key</div>
+            <div class="settings-row-sub">Your key is stored locally</div>
+          </div>
+        </div>
+        <input type="password" class="api-input" id="api-key-input" placeholder="sk-ant-api03-…" onchange="saveApiKey(this.value)">
+
+        <div class="divider"></div>
+        <div class="section-label">Memory preferences</div>
+
+        <div class="settings-row" onclick="toggleSetting('daily')">
+          <div class="settings-row-icon">⏰</div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Daily review reminder</div>
+            <div class="settings-row-sub">Notify when cards are due</div>
+          </div>
+          <div class="toggle" id="toggle-daily"></div>
+        </div>
+        <div class="settings-row" onclick="toggleSetting('pretest')">
+          <div class="settings-row-icon">🧪</div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Pre-test new books</div>
+            <div class="settings-row-sub">Test before extraction — deeper encoding</div>
+          </div>
+          <div class="toggle on" id="toggle-pretest"></div>
+        </div>
+        <div class="settings-row" onclick="toggleSetting('confusionDetect')">
+          <div class="settings-row-icon">🔀</div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Confusion pair detection</div>
+            <div class="settings-row-sub">Surface ideas likely to interfere</div>
+          </div>
+          <div class="toggle on" id="toggle-confusionDetect"></div>
+        </div>
+        <div class="settings-row" onclick="toggleSetting('transferPrompts')">
+          <div class="settings-row-icon">⚡</div>
+          <div class="settings-row-text">
+            <div class="settings-row-title">Application prompts</div>
+            <div class="settings-row-sub">Real-world transfer challenges</div>
+          </div>
+          <div class="toggle on" id="toggle-transferPrompts"></div>
+        </div>
+
+        <div class="divider"></div>
+        <div style="text-align:center;padding:8px 0">
+          <button class="btn btn-secondary" onclick="showScreen('library');setNav('library')">← Back to Library</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <nav>
+    <div class="nav-item active" id="nav-library" onclick="showScreen('library');setNav('library')">
+      <span class="nav-icon">📚</span>Library
+    </div>
+    <div class="nav-item" id="nav-hub" onclick="goToHub();setNav('hub')">
+      <span class="nav-icon">◈</span>Memory
+      <div class="nav-badge" id="nav-due-badge" style="display:none">!</div>
+    </div>
+    <div class="nav-item" id="nav-memory" onclick="showScreen('memory');setNav('memory')">
+      <span class="nav-icon">✏️</span>Notes
+    </div>
+    <div class="nav-item" id="nav-coach" onclick="showScreen('coach');setNav('coach')">
+      <span class="nav-icon">💬</span>Coach
+    </div>
+    <div class="nav-item" id="nav-settings" onclick="showScreen('settings');setNav('settings')">
+      <span class="nav-icon">⚙️</span>Settings
+    </div>
+  </nav>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const state = {
+  currentBook: null,
+  readerProfile: localStorage.getItem('bb_profile') || 'general',
+  compressionLevel: '3m',
+  apiKey: localStorage.getItem('bb_api_key') || '',
+  books: JSON.parse(localStorage.getItem('bb_books') || '[]'),
+  settings: JSON.parse(localStorage.getItem('bb_settings') || '{"daily":false,"pretest":true,"confusionDetect":true,"transferPrompts":true}'),
+  chatHistory: [],
+  memoryNotes: JSON.parse(localStorage.getItem('bb_memory_notes') || '[]'),
+  results: null
+};
+
+// ═══════════════════════════════════════════
+// DEMO DATA
+// ═══════════════════════════════════════════
+const DEMO_BOOKS = [
+  { id:'influence', name:'Influence: The Psychology of Persuasion', emoji:'📗', author:'Robert Cialdini', pages:320, progress:0.65, memoryState:'due', dueCount:4 },
+  { id:'atomic', name:'Atomic Habits', emoji:'📘', author:'James Clear', pages:278, progress:0.3, memoryState:'new', dueCount:0 },
+  { id:'thinking', name:'Thinking, Fast and Slow', emoji:'📙', author:'Daniel Kahneman', pages:499, progress:0.1, memoryState:'risk', dueCount:2 }
+];
+
+const DEMO_BRIEF = {
+  bookId: 'influence',
+  bookName: 'Influence: The Psychology of Persuasion',
+  compression: '3-min',
+  profile: 'General reader',
+  load: '12 must-know ideas · Medium load',
+  thesis: 'Human decisions are mostly automatic, triggered by mental shortcuts — and six universal principles exploit those shortcuts so reliably they function like lock-and-key mechanisms in any social context.',
+  ideas: [
+    { text:'Reciprocity works even when the gift is unsolicited and from someone you dislike — the trigger is the obligation, not the relationship.', tier:'must' },
+    { text:'Commitment escalates silently: once you say yes to a small request, you rewrite your self-image to match, making the next yes almost automatic.', tier:'must' },
+    { text:'Social proof is most powerful precisely when you are uncertain — which means it is most dangerous when you most need independent judgment.', tier:'must' }
+  ],
+  confusions: [
+    { a:'Reciprocity', b:'Liking', risk:'Both feel like warmth, but Reciprocity is mechanical obligation (even from people you dislike); Liking is preference-based compliance.' },
+    { a:'Commitment', b:'Social Proof', risk:'Both cause compliance, but Commitment is internal (identity alignment); Social Proof is external (following the crowd).' }
+  ],
+  trigger: 'Today: before any major decision, pause and ask — "Which of the six principles is active right now?"',
+  remember5: ['The 6 principles operate as mental shortcuts — automatic, not deliberate','Reciprocity creates debt even from unwanted gifts','Commitment works by rewriting self-image','Social proof is strongest in uncertainty','Scarcity signals value even when artificially created']
+};
+
+const INFLUENCE_DECK = [
+  { id:'inf_01',category:'Core Concept',title:'The Click-Whirr Response',question:'What is a "click-whirr" automatic response?',answer:'A fixed-action pattern triggered by a single feature — bypassing conscious thought entirely.',detail:'Like a tape recording, specific triggers activate preset response patterns. "Expensive = good." "Expert = obey." The trigger fires the behavior without deliberate reasoning.',example:'Jewelry relabeled at double the price sold faster — the higher price triggered "valuable" automatically.',chapter:'Ch.1',tier:'must',value:9 },
+  { id:'inf_02',category:'Principle',title:'Reciprocity',question:'Why does reciprocity create compliance even with unwanted gifts?',answer:'The rule of reciprocation overrides personal preference — the obligation is to the act of giving, not the giver.',detail:'Even an uninvited favor creates a felt debt. This means anyone can weaponize reciprocity by being first to give, regardless of whether you like them.',example:'Hare Krishnas gave flowers → donations tripled even from people who tried to return the flower.',chapter:'Ch.2',tier:'must',value:9 },
+  { id:'inf_03',category:'Principle',title:'Commitment & Consistency',question:'How does a small commitment escalate into larger compliance?',answer:'It changes self-image. Once you say "yes" to a small request, you internally rewrite who you are — then act consistently with that identity.',detail:'The foot-in-the-door works because the first commitment creates a new self-label. Subsequent requests that align with that label feel natural, not coerced.',example:'Homeowners who displayed a small window sticker later agreed to a large yard sign at 4x the rate of those who had not.',chapter:'Ch.7',tier:'must',value:9 },
+  { id:'inf_04',category:'Principle',title:'Social Proof',question:'When is Social Proof most dangerous?',answer:'When you are most uncertain — which is exactly when you most need independent judgment.',detail:'We look to others to determine correct behavior. In uncertainty, this shortcut is strongest. Fake reviews, laugh tracks, and "bestseller" labels all exploit this timing.',example:'Laugh tracks make objectively unfunny jokes seem funnier — the laugh IS the social proof.',chapter:'Ch.4',tier:'must',value:8 },
+  { id:'inf_05',category:'Principle',title:'Authority',question:'What two questions defeat the Authority principle?',answer:'"Is this person truly expert in this area?" and "How honest can I expect them to be here?"',detail:'Credentials can be faked or irrelevant. A genuine expert with conflicting incentives is still a compliance risk. Always verify both expertise AND alignment.',example:'Milgram: 65% delivered dangerous shocks when instructed by a scientist — the lab coat was the trigger.',chapter:'Ch.5',tier:'must',value:8 },
+  { id:'inf_06',category:'Principle',title:'Liking',question:'What three factors most increase the Liking principle?',answer:'Physical attractiveness, similarity to us, and familiar association with good things.',detail:'We comply more readily with people we like. Salespeople exploit this through manufactured commonality, compliments, and friendly association.',example:'Tupperware parties: buying from a friend feels socially obligatory — you like them, so you buy.',chapter:'Ch.3',tier:'must',value:7 },
+  { id:'inf_07',category:'Principle',title:'Scarcity',question:'What psychological mechanism drives the Scarcity principle?',answer:'Psychological reactance — when freedom to have something is threatened, desire intensifies.',detail:'Loss aversion amplifies this: we hate losing access more than we enjoy having it. "Only 3 left" exploits reactance, not rational preference.',example:'"Romeo & Juliet effect": forbidden love becomes more intense when access is restricted.',chapter:'Ch.6',tier:'must',value:8 },
+  { id:'inf_08',category:'Tactic',title:'Rejection-Then-Retreat',question:'How does Rejection-Then-Retreat create a double compliance trap?',answer:'The large request is rejected, the "concession" triggers reciprocity, AND the contrast makes the smaller ask seem more reasonable.',detail:'Two principles fire simultaneously: reciprocity (they gave up something, so must you) and contrast (vs. the original ask, this seems small). The technique is highly reliable.',example:'Boy Scout cookies: ask for $50 donation → retreat to $5 bar of chocolate → compliance doubles vs. asking $5 directly.',chapter:'Ch.2',tier:'must',value:8 },
+  { id:'inf_09',category:'Tactic',title:'Foot-in-the-Door',question:'What psychological change makes Foot-in-the-Door so durable?',answer:'The first "yes" creates a new self-image — you now identify as "the kind of person who supports X."',detail:'Once the identity label sticks, subsequent requests that fit the label feel internally consistent rather than externally pressured.',example:'Window sticker → yard sign (4x compliance). Small charitable donation → large one later.',chapter:'Ch.7',tier:'must',value:8 },
+  { id:'inf_10',category:'Concept',title:'Contrast Principle',question:'How does the Contrast Principle alter perceived value?',answer:'We evaluate things relative to what we just experienced — not in absolute terms.',detail:'Real estate agents show overpriced dumps first. Suit salespeople upsell accessories after the main sale. Everything that follows a large number feels cheap.',example:'Holding hand in ice water → lukewarm feels hot. $300 shirt seems cheap after $2,000 suit.',chapter:'Ch.1',tier:'must',value:7 },
+  { id:'inf_11',category:'Defense',title:'Recognizing Reciprocity Traps',question:'How do you neutralize an unwanted reciprocity obligation?',answer:'Mentally relabel the gift as a sales tool — once it\'s "a marketing technique," you can keep it without feeling obligated to comply.',detail:'The obligation exists because you framed the gift as a social exchange. Reframing it as commercial manipulation removes the social obligation entirely.',example:'Free trial → it\'s a marketing tool, evaluate on its own merits → no obligation to subscribe.',chapter:'Ch.2',tier:'must',value:7 },
+  { id:'inf_12',category:'Defense',title:'Spotting Fake Social Proof',question:'When should you be most skeptical of Social Proof?',answer:'When you can\'t verify it\'s genuine — especially in uncertainty where manipulation is easiest.',detail:'Fake reviews, "standing room only" signs at empty venues, and paid crowds exploit exactly the conditions where social proof is most compelling.',example:'SRO signs outside near-empty venues. Manufactured laugh tracks. Political rally crowd noise.',chapter:'Ch.4',tier:'nice',value:6 },
+  { id:'inf_13',category:'Concept',title:'Unity Principle',question:'What makes the Unity principle distinct from Liking?',answer:'Unity is shared identity ("we are the same kind of people"), not just mutual positive feeling.',detail:'Fundraisers, political movements, and brands exploit tribal identity — "as a fellow X" — to bypass conscious evaluation. It is deeper than likability.',example:'"As a fellow New Yorker…" Sports team loyalty overriding logic. Religious community purchasing.',chapter:'Ch.8',tier:'nice',value:6 },
+  { id:'inf_14',category:'Tactic',title:'Lowball Technique',question:'Why do people follow through on lowball deals after the real price is revealed?',answer:'By the time the real price appears, they have already committed mentally and begun justifying the purchase to themselves.',detail:'Commitment is made at the fake price. Self-image update happens. Then the real cost emerges — but reversing feels inconsistent with who they now believe they are.',example:'Car dealer quotes low price → "manager won\'t approve" → price rises → buyer often accepts anyway.',chapter:'Ch.7',tier:'nice',value:6 },
+  { id:'inf_15',category:'Defense',title:'Scarcity Defense',question:'What\'s the key question when you feel urgency from scarcity?',answer:'"Do I want this because it\'s scarce, or because it genuinely serves my needs?"',detail:'Scarcity pressure increases arousal and narrows focus. This physiological state is the signal to pause, not accelerate.',example:'Flash sale panic: did you want it before the countdown appeared? If no — it\'s the scarcity talking.',chapter:'Ch.6',tier:'nice',value:5 },
+  { id:'inf_16',category:'Concept',title:'Truth-by-Repetition',question:'Why does repeating a claim make it seem more credible?',answer:'Repetition creates processing fluency — ease of processing that brains mistake for familiarity and then truth.',detail:'Mere-exposure effect: we trust things more simply because we\'ve seen them before, regardless of their actual validity.',example:'Political talking points. Advertising slogans. Rumors that spread widely become "common knowledge."',chapter:'Ch.4',tier:'ref',value:4 },
+  { id:'inf_17',category:'Concept',title:'Scarcity of Information',question:'How does exclusive information amplify influence?',answer:'Restricted information feels more valuable and credible — even if the content itself is ordinary.',detail:'Combine information scarcity with authority and you have an extremely potent compliance cocktail.',example:'"I\'m not supposed to tell you this, but…" dramatically increases compliance with whatever follows.',chapter:'Ch.6',tier:'ref',value:4 },
+  { id:'inf_18',category:'Defense',title:'Interrupting Authority',question:'What is the fastest defense against authority pressure?',answer:'Ask whether the expertise is actually relevant to this specific claim — title in one area doesn\'t transfer to all areas.',detail:'A famous doctor endorsing a sugar drink is exploiting the authority halo. The expertise is real but irrelevant here.',example:'Celebrity athlete endorsing financial products. Doctor recommending a specific drug brand.',chapter:'Ch.5',tier:'ref',value:3 }
+];
+
+const CONFUSION_PAIRS = [
+  { a:'Reciprocity', b:'Liking', risk:'Both feel like warmth — but Reciprocity is mechanical (obligation even from people you dislike); Liking is preference-based.', aText:'Creates felt debt from any act of giving — the relationship doesn\'t matter.', bText:'Creates compliance because we want to please people we\'re fond of.' },
+  { a:'Commitment', b:'Social Proof', risk:'Both produce compliance — but Commitment is internal (identity pressure); Social Proof is external (crowd pressure).', aText:'Internal: "I said yes before, so I must be the kind of person who supports this."', bText:'External: "Everyone else is doing it, so it must be right."' },
+  { a:'Foot-in-the-Door', b:'Lowball', risk:'Both use escalating commitment — but FITD starts small then asks bigger; Lowball commits you then reveals the real (higher) cost.', aText:'Small yes → self-image update → bigger yes feels consistent.', bText:'Commit to deal → hidden costs revealed → commitment already made.' },
+  { a:'Scarcity', b:'Authority', risk:'Both short-circuit rational evaluation — but Scarcity creates urgency; Authority creates deference.', aText:'Triggers reactance: "I can\'t have it freely → I want it more."', bText:'Triggers deference: "An expert said so → I don\'t need to evaluate it."' }
+];
+
+const MEM_PATH_ITEMS = [
+  { day:'Day 0', action:'Compression + Pre-Test', sub:'Get the Memory Brief · Test what you already know', state:'done' },
+  { day:'Day 1', action:'First Retrieval', sub:'Review all Must-Know cards · Rate difficulty honestly', state:'active' },
+  { day:'Day 3', action:'Interleaved Review + Confusion Drill', sub:'Mix cards across concepts · Train confusion pairs', state:'upcoming' },
+  { day:'Day 7', action:'Application Challenge', sub:'Apply 3 ideas to a real scenario from your work or life', state:'upcoming' },
+  { day:'Day 14+', action:'Reinforce or Retire', sub:'Stable ideas fade from review · Weak ideas escalate', state:'upcoming' }
+];
+
+const TRANSFER_PROMPTS = [
+  { id:'t1', prompt:'You\'re about to ask your team to adopt a new process they\'re resistant to. Which two influence principles would you use — and what would your exact first move be?', concept:'Reciprocity + Commitment' },
+  { id:'t2', prompt:'Someone is pressuring you with a "limited-time offer" that expires in 24 hours. Map out every influence principle being used on you right now.', concept:'Scarcity + Urgency defense' },
+  { id:'t3', prompt:'You want a colleague to give more candid feedback in meetings. Design a Foot-in-the-Door sequence — what would your three progressive asks be?', concept:'Commitment & Consistency' },
+  { id:'t4', prompt:'You\'re writing a proposal. Without any manipulation, how would you ethically use Social Proof and Authority to increase the likelihood it gets adopted?', concept:'Social Proof + Authority (ethical use)' }
+];
+
+// ═══════════════════════════════════════════
+// SM-2 ALGORITHM
+// ═══════════════════════════════════════════
+function sm2(card, quality) {
+  let { easiness=2.5, interval=1, repetitions=0 } = card;
+  if (quality < 3) { repetitions=0; interval=1; }
+  else {
+    if (repetitions===0) interval=1;
+    else if (repetitions===1) interval=6;
+    else interval=Math.round(interval*easiness);
+    repetitions++;
+  }
+  easiness = Math.max(1.3, easiness+0.1-(5-quality)*(0.08+(5-quality)*0.02));
+  return { easiness, interval, repetitions, nextReview:Date.now()+interval*86400000, lastQuality:quality, lastReviewed:Date.now() };
+}
+
+function getCardStates(){ return JSON.parse(localStorage.getItem('bb_card_states')||'{}'); }
+function saveCardState(id,s){ const st=getCardStates(); st[id]=s; localStorage.setItem('bb_card_states',JSON.stringify(st)); }
+function getCardState(id){ return getCardStates()[id]||{easiness:2.5,interval:1,repetitions:0,nextReview:0,lastQuality:-1}; }
+
+function getDueCards(){
+  const now=Date.now(), states=getCardStates(), deck=getActiveDeck();
+  return deck.filter(c=>{ const s=states[c.id]; return !s||s.lastQuality===-1||s.nextReview<=now; });
+}
+function getWeakCards(){
+  const states=getCardStates(), deck=getActiveDeck();
+  return deck.filter(c=>{ const s=states[c.id]; return s&&s.lastQuality>=0&&s.lastQuality<=2; });
+}
+function getMustKnowCards(){ return getActiveDeck().filter(c=>c.tier==='must'); }
+function getRetention(id){
+  const s=getCardState(id); if(s.lastQuality===-1) return 0;
+  const daysSince=(Date.now()-s.lastReviewed)/86400000;
+  return Math.max(0,Math.min(100,Math.round(100*Math.exp(-0.7*daysSince/s.interval))));
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  loadApiKey();
+  loadSettings();
+  renderLibrary();
+  setupDrop();
+  renderHub();
+  initChat();
+  renderMemoryNotes();
+  checkDueBadge();
+  if(!localStorage.getItem('bb_streak')) localStorage.setItem('bb_streak','7');
+  if(!localStorage.getItem('bb_study_history')) seedHeatmap();
+});
+
+function seedHeatmap(){
+  const h={};
+  for(let i=0;i<28;i++){
+    if(Math.random()>0.4){
+      const d=new Date(Date.now()-i*86400000);
+      h[d.toDateString()]=Math.floor(Math.random()*10)+1;
+    }
+  }
+  localStorage.setItem('bb_study_history',JSON.stringify(h));
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('screen-'+id);
+  if(el) el.classList.add('active');
+}
+function setNav(id){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('nav-'+id);
+  if(el) el.classList.add('active');
+}
+function checkDueBadge(){
+  const due=getDueCards().length;
+  const badge=document.getElementById('nav-due-badge');
+  if(badge) badge.style.display=due>0?'flex':'none';
+}
+function goToHub(){
+  renderHub();
+  showScreen('hub');
+}
+
+// ═══════════════════════════════════════════
+// LIBRARY
+// ═══════════════════════════════════════════
+function loadApiKey(){
+  const key=localStorage.getItem('bb_api_key')||'';
+  state.apiKey=key;
+  const el=document.getElementById('api-key-input');
+  if(el) el.value=key;
+}
+function saveApiKey(key){
+  state.apiKey=key.trim();
+  localStorage.setItem('bb_api_key',state.apiKey);
+  if(state.apiKey){
+    showToast('API key saved ✓');
+    const warn=document.getElementById('intent-api-warning');
+    if(warn) warn.style.display='none';
+  }
+}
+
+function renderLibrary(){
+  const el=document.getElementById('books-list');
+  const books=state.books.length?state.books:DEMO_BOOKS;
+  if(!books.length){
+    el.innerHTML=`<div class="empty-state"><span class="empty-icon">◈</span><div class="empty-title">No books yet</div><div class="empty-sub">Upload a PDF or EPUB to start encoding.</div></div>`;
+    return;
+  }
+  el.innerHTML=books.map(b=>{
+    const chip=b.memoryState==='due'?`<span class="mem-chip chip-due">${b.dueCount} due</span>`:
+      b.memoryState==='risk'?`<span class="mem-chip chip-risk">⚠ At risk</span>`:
+      b.memoryState==='new'?`<span class="mem-chip chip-new">Not encoded</span>`:
+      `<span class="mem-chip chip-stable">Stable</span>`;
+    const pct=Math.round((b.progress||0)*100);
+    return `<div class="book-card" onclick="openBook('${b.id}')">
+      <div class="book-spine" style="background:${bookColor(b.emoji)}">${b.emoji}</div>
+      <div class="book-info">
+        <div class="book-name">${b.name}</div>
+        <div class="book-meta"><span>${b.author}</span>${chip}</div>
+        <div class="book-progress"><div class="book-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div style="color:var(--muted2);font-size:0.9rem">›</div>
+    </div>`;
+  }).join('');
+}
+function bookColor(emoji){ const map={'📗':'rgba(106,170,138,0.15)','📘':'rgba(91,128,184,0.15)','📙':'rgba(212,168,67,0.12)'}; return map[emoji]||'rgba(255,255,255,0.05)'; }
+
+function openBook(id){
+  const books=state.books.length?state.books:DEMO_BOOKS;
+  const book=books.find(b=>b.id===id);
+  if(!book) return;
+  state.currentBook=book;
+  document.getElementById('intent-emoji').textContent=book.emoji;
+  document.getElementById('intent-book-name').textContent=book.name;
+  document.getElementById('intent-book-author').textContent=book.author;
+  // Show/hide API key warning
+  const warn=document.getElementById('intent-api-warning');
+  const isDemoBook=DEMO_BOOKS.some(d=>d.id===id);
+  if(warn) warn.style.display=(state.apiKey||isDemoBook)?'none':'flex';
+  // Set profile chip
+  document.querySelectorAll('.profile-chip').forEach(c=>c.classList.remove('active'));
+  const pc=document.querySelector(`.profile-chip[onclick*="'${state.readerProfile}'"]`);
+  if(pc) pc.classList.add('active');
+  showScreen('intent');
+  setNav('');
+}
+
+function loadDemo(){
+  // Reset to demo books
+  state.books=JSON.parse(JSON.stringify(DEMO_BOOKS));
+  // Pre-set deck for demo books
+  state.currentDeck=INFLUENCE_DECK;
+  state.currentConfusionPairs=CONFUSION_PAIRS;
+  state.currentTransferPrompts=TRANSFER_PROMPTS;
+  renderLibrary();
+  showToast('Demo library loaded ✓');
+}
+
+function handleFileUpload(input){
+  if(!input.files[0]) return;
+  const f=input.files[0];
+  const book={
+    id:'upload_'+Date.now(),
+    name:f.name.replace(/\.[^/.]+$/,'').replace(/_/g,' '),
+    emoji:'📕', author:'Uploaded', pages:0, progress:0,
+    memoryState:'new', dueCount:0
+  };
+  // Store file reference in a map so we can read it at extraction time
+  state.fileMap = state.fileMap||{};
+  state.fileMap[book.id] = f;
+  state.books.unshift(book);
+  localStorage.setItem('bb_books',JSON.stringify(state.books));
+  renderLibrary();
+  openBook(book.id);
+}
+
+function setupDrop(){
+  const dz=document.getElementById('drop-zone');
+  if(!dz) return;
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('drag');
+    const f=e.dataTransfer.files[0];
+    if(f){ const inp=document.getElementById('file-input'); inp.files=e.dataTransfer.files; handleFileUpload(inp); }
+  });
+}
+
+// ═══════════════════════════════════════════
+// INTENT / COMPRESSION
+// ═══════════════════════════════════════════
+function selectProfile(p,el){
+  state.readerProfile=p;
+  document.querySelectorAll('.profile-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// REAL EXTRACTION PIPELINE
+// ═══════════════════════════════════════════
+
+async function extractPdfText(file, maxChars=120000){
+  // Set the worker source for pdf.js
+  if(window.pdfjsLib){
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      try{
+        if(!window.pdfjsLib){ reject(new Error('PDF.js not loaded')); return; }
+        const typedArr=new Uint8Array(e.target.result);
+        const pdf=await pdfjsLib.getDocument({data:typedArr}).promise;
+        const numPages=pdf.numPages;
+        let text='';
+        // Extract text from pages, stop once we have enough
+        for(let i=1;i<=numPages&&text.length<maxChars;i++){
+          const page=await pdf.getPage(i);
+          const content=await page.getTextContent();
+          const pageText=content.items.map(item=>item.str).join(' ');
+          text+=pageText+'\n';
+        }
+        resolve({text:text.slice(0,maxChars), pages:numPages});
+      } catch(err){ reject(err); }
+    };
+    reader.onerror=()=>reject(new Error('File read failed'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function extractEpubText(file, maxChars=120000){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+      // Basic EPUB: it's a zip, we read as text and strip XML tags
+      const raw=e.target.result;
+      // Strip HTML/XML tags to get plain text
+      const stripped=raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+      resolve({text:stripped.slice(0,maxChars), pages:0});
+    };
+    reader.onerror=()=>reject(new Error('File read failed'));
+    reader.readAsText(file);
+  });
+}
+
+function setLoadStep(n){
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('lstep-'+i);
+    if(!el) continue;
+    el.classList.remove('done','active');
+    if(i<n) el.classList.add('done');
+    else if(i===n) el.classList.add('active');
+  }
+}
+
+function buildExtractionPrompt(bookText, bookName, compressionLevel, readerProfile){
+  const depthMap={
+    '10s':'Extract only: 1 core thesis sentence. Be punchy and non-obvious.',
+    '60s':'Extract: 1 thesis + 3 non-obvious ideas + 2 confusion risks + 1 action trigger.',
+    '3m':'Full Memory Brief extraction as specified below.',
+    '7m':'Full Memory Brief PLUS deep extraction: 15 flashcards, 4 confusion pairs, 4 transfer prompts.'
+  };
+  const profileMap={
+    general:'Balanced, accessible language.',
+    founder:'Prioritise strategy, decision-making, leverage, competitive advantage. Skip obvious things.',
+    manager:'Prioritise people, execution, communication, team dynamics.',
+    student:'Prioritise conceptual clarity, definitions, exam-relevant distinctions.',
+    beginner:'Simplify technical language. Add more context and examples.'
+  };
+
+  return `You are a memory-science extraction engine. You will read a book extract and produce a structured Memory Brief.
+
+BOOK: "${bookName}"
+READER PROFILE: ${readerProfile} — ${profileMap[readerProfile]||profileMap.general}
+COMPRESSION LEVEL: ${depthMap[compressionLevel]||depthMap['3m']}
+
+BOOK TEXT (first ${Math.round(bookText.length/1000)}k chars):
+---
+${bookText}
+---
+
+EXTRACTION RULES:
+- Extract ONLY from the actual text above — no prior knowledge about this book
+- Every idea must be genuinely extractable from the text
+- Prioritise non-obvious, high-value insights over obvious summaries
+- Classify each idea as must_know / nice_to_know / reference_only
+- Must know = ideas that fundamentally change understanding; nice to know = useful but optional; reference only = lookup only
+
+REQUIRED JSON OUTPUT (respond ONLY with valid JSON, no markdown, no preamble):
+{
+  "thesis": "One sentence — the book's most important non-obvious idea",
+  "nonObviousIdeas": [
+    {"text": "...", "tier": "must_know"},
+    {"text": "...", "tier": "must_know"},
+    {"text": "...", "tier": "must_know"}
+  ],
+  "confusionRisks": [
+    {"conceptA": "...", "conceptB": "...", "risk": "Why these are commonly confused"},
+    {"conceptA": "...", "conceptB": "...", "risk": "..."}
+  ],
+  "actionTrigger": "One specific action the reader can take TODAY based on the book",
+  "remember5": ["idea 1", "idea 2", "idea 3", "idea 4", "idea 5"],
+  "memoryLoad": "X must-know ideas · Light/Medium/Heavy load",
+  "flashcards": [
+    {"id":"fc_1","category":"...","title":"...","question":"...","answer":"...","detail":"...","example":"...","tier":"must_know","value":8},
+    {"id":"fc_2","category":"...","title":"...","question":"...","answer":"...","detail":"...","example":"...","tier":"must_know","value":7},
+    {"id":"fc_3","category":"...","title":"...","question":"...","answer":"...","detail":"...","example":"...","tier":"must_know","value":8},
+    {"id":"fc_4","category":"...","title":"...","question":"...","answer":"...","detail":"...","example":"...","tier":"nice_to_know","value":5},
+    {"id":"fc_5","category":"...","title":"...","question":"...","answer":"...","detail":"...","example":"...","tier":"nice_to_know","value":4},
+    {"id":"fc_6","category":"...","title":"...","question":"...","answer":"...","detail":"...","example":"...","tier":"reference_only","value":3}
+  ],
+  "quotes": [
+    {"text":"exact quote from the book text","source":"chapter or page reference if available"},
+    {"text":"...","source":"..."}
+  ],
+  "glossary": [
+    {"term":"...","definition":"..."},
+    {"term":"...","definition":"..."},
+    {"term":"...","definition":"..."}
+  ],
+  "actionPlan": [
+    {"timeframe":"This week","action":"..."},
+    {"timeframe":"This month","action":"..."},
+    {"timeframe":"This month","action":"..."}
+  ],
+  "confusionPairs": [
+    {"a":"concept name","b":"concept name","risk":"why confused","aText":"what A actually means","bText":"what B actually means"},
+    {"a":"...","b":"...","risk":"...","aText":"...","bText":"..."}
+  ],
+  "transferPrompts": [
+    {"id":"t1","prompt":"A real-world scenario challenge using the book's ideas","concept":"concept name"},
+    {"id":"t2","prompt":"...","concept":"..."}
+  ]
+}
+
+Produce ONLY the JSON above. No other text. All fields required. flashcards array must have at least 6 items.`;
+}
+
+async function runExtraction(level){
+  state.compressionLevel=level;
+  const book=state.currentBook;
+
+  if(!state.apiKey){
+    showApiKeyWarning();
+    return;
+  }
+
+  showScreen('loading');
+  setLoadStep(1);
+
+  try{
+    let bookText='';
+    let pages=0;
+
+    // Try to get the file
+    const file=state.fileMap&&book&&state.fileMap[book.id];
+    const isDemoBook=!file;
+
+    if(isDemoBook){
+      // For demo books, skip extraction and use demo data
+      setLoadStep(2);
+      await delay(400);
+      setLoadStep(3);
+      await delay(400);
+      setLoadStep(4);
+      await delay(400);
+      setLoadStep(5);
+      await delay(400);
+      showResults(null); // null = use demo data
+      return;
+    }
+
+    // Step 1: Extract text from file
+    setLoadStep(1);
+    try{
+      if(file.name.toLowerCase().endsWith('.epub')){
+        const result=await extractEpubText(file);
+        bookText=result.text; pages=result.pages;
+      } else {
+        const result=await extractPdfText(file);
+        bookText=result.text; pages=result.pages;
+        if(book) book.pages=pages;
+      }
+    } catch(extractErr){
+      // Fallback: try reading as plain text
+      bookText=await file.text().catch(()=>'');
+      if(!bookText){
+        showExtractionError('Could not read file. Make sure it is a valid PDF or EPUB.');
+        return;
+      }
+    }
+
+    if(!bookText||bookText.trim().length<100){
+      showExtractionError('The file appears to be empty or image-only. BookBrain needs text-based PDFs.');
+      return;
+    }
+
+    // Step 2: Score/classify
+    setLoadStep(2);
+    await delay(300);
+
+    // Step 3: Call Claude API
+    setLoadStep(3);
+    const prompt=buildExtractionPrompt(bookText, book?.name||file.name, level, state.readerProfile);
+
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':state.apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:4000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    if(!response.ok){
+      const errData=await response.json().catch(()=>({}));
+      const errMsg=errData?.error?.message||`API error ${response.status}`;
+      if(response.status===401) showExtractionError('Invalid API key. Check Settings and re-enter your Claude API key.');
+      else if(response.status===429) showExtractionError('Rate limit hit. Wait a moment and try again.');
+      else showExtractionError('Claude API error: '+errMsg);
+      return;
+    }
+
+    const data=await response.json();
+    const rawText=data.content?.[0]?.text||'';
+
+    // Step 4: Parse JSON
+    setLoadStep(4);
+    await delay(200);
+
+    let parsed;
+    try{
+      // Strip any markdown fences if present
+      const clean=rawText.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+      parsed=JSON.parse(clean);
+    } catch(parseErr){
+      // Try to extract JSON from within the text
+      const jsonMatch=rawText.match(/\{[\s\S]*\}/);
+      if(jsonMatch){
+        try{ parsed=JSON.parse(jsonMatch[0]); }
+        catch(e2){ showExtractionError('Could not parse AI response. Try again.'); return; }
+      } else {
+        showExtractionError('AI returned unexpected format. Try again.');
+        return;
+      }
+    }
+
+    // Validate required fields
+    if(!parsed.thesis||!parsed.flashcards){
+      showExtractionError('Incomplete extraction. Try a different compression level.');
+      return;
+    }
+
+    // Step 5: Build memory path
+    setLoadStep(5);
+    await delay(300);
+
+    // Store results keyed by book id
+    state.extractedResults=state.extractedResults||{};
+    state.extractedResults[book.id]=parsed;
+
+    // Update book state
+    if(book){ book.memoryState='due'; book.dueCount=parsed.flashcards.filter(c=>c.tier==='must_know').length; }
+    localStorage.setItem('bb_books',JSON.stringify(state.books));
+
+    showResults(parsed);
+
+  } catch(err){
+    console.error('Extraction error:',err);
+    showExtractionError('Something went wrong: '+err.message);
+  }
+}
+
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function showApiKeyWarning(){
+  showScreen('loading');
+  document.getElementById('loading-desc').textContent='API key required';
+  document.getElementById('loading-steps').innerHTML=`
+    <div style="background:rgba(192,80,80,0.1);border:1px solid rgba(192,80,80,0.25);border-radius:12px;padding:18px;text-align:center;margin-top:10px">
+      <div style="font-size:1.2rem;margin-bottom:9px">🔑</div>
+      <div style="font-weight:600;font-size:0.9rem;margin-bottom:7px;color:var(--text)">Claude API key needed</div>
+      <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:14px">BookBrain uses your Claude API key to read and extract from your book. Your key is stored locally and never shared.</div>
+      <button class="btn btn-primary" onclick="showScreen('settings');setNav('settings')" style="width:100%;margin-bottom:8px">Add API key in Settings →</button>
+      <button class="btn btn-secondary" onclick="openBook(state.currentBook?.id)" style="width:100%;font-size:0.82rem">← Back</button>
+    </div>`;
+}
+
+function showExtractionError(msg){
+  setLoadStep(0);
+  document.getElementById('loading-desc').textContent='Extraction failed';
+  document.getElementById('loading-steps').innerHTML=`
+    <div style="background:rgba(192,80,80,0.08);border:1px solid rgba(192,80,80,0.22);border-radius:12px;padding:18px;text-align:center">
+      <div style="font-size:1.1rem;margin-bottom:8px">⚠</div>
+      <div style="font-weight:600;font-size:0.88rem;color:var(--text);margin-bottom:6px">Could not extract</div>
+      <div style="font-size:0.81rem;color:var(--muted);line-height:1.6;margin-bottom:14px">${msg}</div>
+      <button class="btn btn-primary" onclick="openBook(state.currentBook?.id)" style="width:100%;margin-bottom:8px">← Try again</button>
+      <button class="btn btn-secondary" onclick="showResults(null)" style="width:100%;font-size:0.82rem">Use demo data instead</button>
+    </div>`;
+}
+
+function animateLoading(level){
+  // Kept for compatibility — real pipeline uses setLoadStep directly
+}
+
+// ═══════════════════════════════════════════
+// RESULTS / MEMORY BRIEF
+// ═══════════════════════════════════════════
+function showResults(parsed){
+  // parsed = real extracted JSON from Claude, or null = use demo
+  const isDemo = !parsed;
+  const book = state.currentBook || {name:'Influence',emoji:'📗',author:'Robert Cialdini'};
+
+  // --- Normalise data shape (real vs demo) ---
+  const brief = isDemo ? DEMO_BRIEF : {
+    thesis: parsed.thesis,
+    ideas: (parsed.nonObviousIdeas||[]).map(i=>({text:i.text,tier:i.tier})),
+    confusions: (parsed.confusionRisks||[]).map(c=>({a:c.conceptA,b:c.conceptB,risk:c.risk})),
+    trigger: parsed.actionTrigger,
+    remember5: parsed.remember5||[],
+    load: parsed.memoryLoad||'Ideas extracted · Medium load'
+  };
+
+  // Build dynamic deck from real cards or fall back to INFLUENCE_DECK
+  const rawCards = isDemo ? null : (parsed.flashcards||[]);
+  if(rawCards&&rawCards.length){
+    // Normalise card tier values (API may use must_know / nice_to_know etc)
+    const normTier = t => t==='must_know'?'must':t==='nice_to_know'?'nice':'ref';
+    state.currentDeck = rawCards.map((c,i)=>({
+      id: c.id||`fc_${book.id}_${i}`,
+      category: c.category||'Concept',
+      title: c.title||`Idea ${i+1}`,
+      question: c.question||'',
+      answer: c.answer||'',
+      detail: c.detail||'',
+      example: c.example||'',
+      tier: normTier(c.tier||'nice_to_know'),
+      value: c.value||5,
+      chapter: c.chapter||''
+    }));
+  } else {
+    state.currentDeck = INFLUENCE_DECK; // demo fallback
+  }
+
+  // Store confusion pairs and transfer prompts for session use
+  if(!isDemo){
+    state.currentConfusionPairs = (parsed.confusionPairs||[]).map(p=>({
+      a:p.a,b:p.b,risk:p.risk,aText:p.aText,bText:p.bText
+    }));
+    state.currentTransferPrompts = (parsed.transferPrompts||[]).map(p=>({
+      id:p.id,prompt:p.prompt,concept:p.concept
+    }));
+  } else {
+    state.currentConfusionPairs = CONFUSION_PAIRS;
+    state.currentTransferPrompts = TRANSFER_PROMPTS;
+  }
+
+  // --- Render header ---
+  document.getElementById('results-title').textContent = book.name;
+  document.getElementById('results-compression').textContent =
+    state.compressionLevel==='10s'?'10-sec thesis':state.compressionLevel==='60s'?'60-sec snapshot':state.compressionLevel==='3m'?'3-min memory brief':'7-min deep encode';
+  document.getElementById('results-profile').textContent = state.readerProfile.charAt(0).toUpperCase()+state.readerProfile.slice(1)+' reader';
+  document.getElementById('results-load').textContent = brief.load+(isDemo?' (demo)':'');
+
+  // --- Memory Brief ---
+  document.getElementById('mb-thesis').textContent = brief.thesis;
+
+  document.getElementById('mb-ideas-list').innerHTML = brief.ideas.map(i=>
+    `<div class="mb-idea"><div class="mb-idea-dot dot-gold"></div><div>${i.text}</div></div>`
+  ).join('');
+
+  document.getElementById('mb-confusions-list').innerHTML = (brief.confusions||[]).map(c=>
+    `<div class="mb-confusion"><div class="mb-confusion-label">⚠ ${c.a} vs. ${c.b}</div>${c.risk}</div>`
+  ).join('') || '<div style="color:var(--muted);font-size:0.82rem">No confusion risks detected.</div>';
+
+  document.getElementById('mb-trigger-text').textContent = brief.trigger||'Apply one idea from this book today.';
+  document.getElementById('mb-load-label').textContent = brief.load;
+  document.getElementById('mb-remember-n').textContent = 'If you remember 5 things:';
+  document.getElementById('mb-remember-list').innerHTML = (brief.remember5||[]).map((r,i)=>
+    `<div style="padding:4px 0;padding-left:14px;border-left:1.5px solid rgba(212,168,67,0.25);margin-bottom:5px;font-size:0.8rem;line-height:1.5">${i+1}. ${r}</div>`
+  ).join('');
+
+  // --- Memory Path ---
+  document.getElementById('mem-path-items').innerHTML = MEM_PATH_ITEMS.map(i=>
+    `<div class="mem-path-item">
+      <div class="mpi-dot ${i.state==='done'?'mpi-done':i.state==='active'?'mpi-active':'mpi-upcoming'}">${i.state==='done'?'✓':i.state==='active'?'▸':'·'}</div>
+      <div class="mpi-info"><div class="mpi-day">${i.day}</div><div class="mpi-action">${i.action}</div><div class="mpi-sub">${i.sub}</div></div>
+    </div>`
+  ).join('');
+
+  // --- NTR counts from current deck ---
+  const must=state.currentDeck.filter(c=>c.tier==='must');
+  const nice=state.currentDeck.filter(c=>c.tier==='nice');
+  const ref=state.currentDeck.filter(c=>c.tier==='ref');
+  document.getElementById('must-count').textContent=must.length;
+  document.getElementById('nice-count').textContent=nice.length;
+  document.getElementById('ref-count').textContent=ref.length;
+  renderIdeasList('must');
+
+  // --- Supporting artifacts ---
+  const quotes = isDemo ? null : (parsed.quotes||[]);
+  if(quotes&&quotes.length){
+    document.getElementById('quotes-body').innerHTML = quotes.map(q=>
+      `<div style="border-left:2px solid var(--gold);padding:10px 14px;background:var(--gold-glow);border-radius:0 9px 9px 0;margin-bottom:9px;font-style:italic;font-size:0.87rem;line-height:1.6">
+        "${q.text}"
+        <div style="font-style:normal;font-size:0.72rem;color:var(--muted);margin-top:5px">— ${q.source||book.name}</div>
+      </div>`
+    ).join('');
+  } else {
+    document.getElementById('quotes-body').innerHTML=`<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">No direct quotes extracted — try a deeper compression level.</div>`;
+  }
+
+  const glossary = isDemo ? null : (parsed.glossary||[]);
+  if(glossary&&glossary.length){
+    document.getElementById('glossary-body').innerHTML = glossary.map(g=>
+      `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;font-size:0.85rem;color:var(--gold);margin-bottom:3px">${g.term}</div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.5">${g.definition}</div>
+      </div>`
+    ).join('');
+  } else {
+    document.getElementById('glossary-body').innerHTML=`<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">No key terms extracted.</div>`;
+  }
+
+  const actionPlan = isDemo ? null : (parsed.actionPlan||[]);
+  if(actionPlan&&actionPlan.length){
+    document.getElementById('actions-body').innerHTML = actionPlan.map(a=>
+      `<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="width:18px;height:18px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;cursor:pointer;margin-top:1px" onclick="this.style.background='var(--sage)';this.style.borderColor='var(--sage)'"></div>
+        <div><div style="font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">${a.timeframe}</div><div style="font-size:0.85rem;line-height:1.5">${a.action}</div></div>
+      </div>`
+    ).join('');
+  } else {
+    document.getElementById('actions-body').innerHTML=`<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">No action plan extracted.</div>`;
+  }
+
+  showScreen('results');
+  setNav('');
+}
+
+function renderIdeasList(tier){
+  const deck=state.currentDeck||INFLUENCE_DECK;
+  const cards=deck.filter(c=>c.tier===tier);
+  const el=document.getElementById('ideas-list');
+  if(!cards.length){
+    el.innerHTML=`<div style="color:var(--muted);font-size:0.83rem;padding:12px 0">No ${tier==='must'?'must-know':tier==='nice'?'nice-to-know':'reference'} ideas classified.</div>`;
+    return;
+  }
+  el.innerHTML=cards.map(c=>`<div class="idea-card">
+    <div class="idea-card-top">
+      <span class="idea-tier tier-${c.tier}">${c.tier==='must'?'Must Know':c.tier==='nice'?'Nice to Know':'Reference'}</span>
+      <span class="idea-text"><strong style="font-size:0.88rem">${c.title}</strong><br><span style="color:var(--muted)">${c.question}</span></span>
+    </div>
+    <div class="idea-card-actions">
+      <button class="idea-action-btn" onclick="oneClickToCard('${c.id}')">+ To memory</button>
+      <button class="idea-action-btn" onclick="promoteIdea('${c.id}')">↑ Promote</button>
+      <button class="idea-action-btn" style="color:var(--muted2)" onclick="demoteIdea('${c.id}')">↓ Demote</button>
+    </div>
+  </div>`).join('');
+}
+
+function filterNTR(tier,el){
+  document.querySelectorAll('.ntr-tab').forEach(t=>{ t.classList.remove('active'); t.className=t.className.replace(/active-\w+/g,''); });
+  el.classList.add('active','active-'+tier);
+  renderIdeasList(tier);
+}
+
+function toggleArtifact(header){
+  const card=header.closest('.artifact-card');
+  card.classList.toggle('open');
+}
+
+function oneClickToCard(id){
+  const s=getCardState(id);
+  if(s.repetitions===0) { showToast('Added to memory deck ✓'); }
+}
+function promoteIdea(id){ showToast('Promoted to Must Know ✓'); }
+function demoteIdea(id){ showToast('Moved to Nice to Know'); }
+
+function startMemoryPath(){ goToHub(); startStudySession('pretest'); }
+function goToMemoryHub(){ goToHub(); }
+
+// ═══════════════════════════════════════════
+// MEMORY HUB
+// ═══════════════════════════════════════════
+function renderHub(){
+  const deck=getActiveDeck();
+  const due=getDueCards().length;
+  const weak=getWeakCards().length;
+  const states=getCardStates();
+  const mastered=deck.filter(c=>{ const s=states[c.id]; return s&&s.repetitions>=3&&s.lastQuality>=4; }).length;
+
+  document.getElementById('hub-due').textContent=due;
+  document.getElementById('hub-weak').textContent=weak;
+  document.getElementById('hub-mastered').textContent=mastered;
+  document.getElementById('hub-total').textContent=deck.length;
+  document.getElementById('hub-streak').textContent=localStorage.getItem('bb_streak')||'0';
+
+  // Prime action
+  if(due>0){
+    document.getElementById('prime-title').textContent='Daily Review';
+    document.getElementById('prime-sub').textContent=`${due} card${due>1?'s':''} due · ~${Math.ceil(due*0.5)} minutes`;
+    document.getElementById('prime-why').textContent='These ideas are approaching their forgetting threshold. Review now keeps them encoded without extra effort.';
+    document.getElementById('prime-btn').textContent='Begin review →';
+    document.getElementById('prime-btn').onclick=()=>startStudySession('due');
+  } else if(weak>0){
+    document.getElementById('prime-title').textContent='Rescue Weak Ideas';
+    document.getElementById('prime-sub').textContent=`${weak} high-value ideas need more work`;
+    document.getElementById('prime-why').textContent='These Must-Know ideas have failed recall recently. A rescue session now prevents them from slipping out of long-term memory.';
+    document.getElementById('prime-btn').textContent='Rescue now →';
+    document.getElementById('prime-btn').onclick=()=>startStudySession('weak');
+  } else {
+    document.getElementById('prime-title').textContent='All caught up';
+    document.getElementById('prime-sub').textContent='No cards due right now';
+    document.getElementById('prime-why').textContent='Your encoded knowledge is stable. Try an application drill — use what you know in a real scenario.';
+    document.getElementById('prime-btn').textContent='Application drill →';
+    document.getElementById('prime-btn').onclick=()=>startStudySession('application');
+  }
+  document.getElementById('due-badge').textContent=due>0?due+' due':'';
+
+  renderHeatmap();
+  renderForgetRisk();
+  renderLeitner();
+  renderHubBooks();
+  setTimeout(renderConceptMap,80);
+  checkDueBadge();
+}
+
+function renderHubBooks(){
+  const el=document.getElementById('hub-books-list');
+  const books=state.books.length?state.books:DEMO_BOOKS;
+  el.innerHTML=books.map(b=>{
+    const chip=b.memoryState==='due'?`<span class="mem-chip chip-due">${b.dueCount} due</span>`:
+      b.memoryState==='risk'?`<span class="mem-chip chip-risk">⚠ At risk</span>`:
+      b.memoryState==='new'?`<span class="mem-chip chip-new">Not encoded</span>`:
+      `<span class="mem-chip chip-stable">Stable</span>`;
+    return `<div class="deck-card" onclick="openBook('${b.id}')">
+      <div class="deck-emoji">${b.emoji}</div>
+      <div class="deck-info">
+        <div class="deck-name">${b.name}</div>
+        <div class="deck-meta">${b.author} ${chip}</div>
+      </div>
+      <div style="color:var(--muted2);font-size:0.9rem">›</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeatmap(){
+  const el=document.getElementById('heatmap-grid');
+  if(!el) return;
+  const h=JSON.parse(localStorage.getItem('bb_study_history')||'{}');
+  let html='';
+  for(let i=27;i>=0;i--){
+    const d=new Date(Date.now()-i*86400000);
+    const k=d.toDateString();
+    const n=h[k]||0;
+    const lv=n===0?'':n<3?'l1':n<6?'l2':n<10?'l3':'l4';
+    html+=`<div class="heatmap-cell ${lv}" title="${k}: ${n} reviews"></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function renderForgetRisk(){
+  const el=document.getElementById('curve-list');
+  if(!el) return;
+  const sample=getActiveDeck().slice(0,6);
+  el.innerHTML=sample.map(c=>{
+    const ret=getRetention(c.id);
+    const cls=ret<40?'risk-due':ret<70?'risk-soon':'risk-ok';
+    const lbl=ret<40?'⚠ Review now':ret<70?'Review soon':'Stable';
+    const color=ret<40?'var(--danger)':ret<70?'var(--gold)':'var(--sage)';
+    return `<div class="curve-row">
+      <div class="curve-name">${c.title}</div>
+      <div class="curve-bar"><div class="curve-fill" style="width:${ret}%;background:${color}"></div></div>
+      <div class="curve-pct" style="color:${color}">${ret}%</div>
+      <div class="risk-badge ${cls}">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLeitner(){
+  const el=document.getElementById('leitner-boxes');
+  if(!el) return;
+  const states=getCardStates();
+  const deck=getActiveDeck();
+  const boxes=[0,0,0,0,0];
+  deck.forEach(c=>{
+    const s=states[c.id];
+    if(!s||s.lastQuality===-1) boxes[0]++;
+    else if(s.repetitions<=1) boxes[1]++;
+    else if(s.repetitions<=2) boxes[2]++;
+    else if(s.repetitions<=4) boxes[3]++;
+    else boxes[4]++;
+  });
+  const max=Math.max(...boxes,1);
+  const freqs=['Daily','Every 3d','Weekly','2-weekly','Monthly'];
+  el.innerHTML=boxes.map((n,i)=>`<div class="leitner-box lb${i+1}" style="height:${Math.max(24,Math.round(n/max*72))}px" title="Box ${i+1}: ${n} cards">
+    <div class="leitner-cnt">${n}</div>
+    <div class="leitner-lbl">${freqs[i]}</div>
+  </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// STUDY SESSION
+// ═══════════════════════════════════════════
+const MEMORY_TIPS = [
+  'Try to recall the answer before reading it — even partial retrieval strengthens memory.',
+  'After reading, close your eyes and reconstruct the idea in your own words.',
+  'Think of one real situation where this idea applies — that connection builds retrieval paths.',
+  'Ask yourself: how does this conflict with something I believed before?',
+  'The harder the recall, the stronger the encoding. Struggle is the signal of learning.'
+];
+
+let currentSession = { cards:[], index:0, mode:'due', results:[], phase:'read' };
+
+function getActiveDeck(){ return state.currentDeck||INFLUENCE_DECK; }
+
+function buildCards(mode){
+  const now=Date.now(), states=getCardStates();
+  const deck=getActiveDeck();
+  let cards=[];
+  if(mode==='due'||mode==='spaced'){
+    cards=deck.filter(c=>{ const s=states[c.id]; return !s||s.lastQuality===-1||s.nextReview<=now; });
+    if(!cards.length) cards=deck.slice(0,5);
+  } else if(mode==='weak'){
+    cards=deck.filter(c=>{ const s=states[c.id]; return s&&s.lastQuality>=0&&s.lastQuality<=2; });
+    if(!cards.length){ cards=[...deck].sort((a,b)=>(getCardState(a.id).lastQuality||5)-(getCardState(b.id).lastQuality||5)).slice(0,6); }
+  } else if(mode==='new'){
+    cards=deck.filter(c=>{ const s=states[c.id]; return !s||s.lastQuality===-1; });
+  } else if(mode==='interleave'){
+    const bycat={};
+    deck.forEach(c=>{(bycat[c.category]=bycat[c.category]||[]).push(c)});
+    const cats=Object.keys(bycat);
+    let out=[],ci=0;
+    const pool=Object.fromEntries(cats.map(c=>[c,[...bycat[c]].sort(()=>Math.random()-0.5)]));
+    while(out.length<Math.min(8,deck.length)){ const cat=cats[ci%cats.length]; const c=pool[cat]?.shift(); if(c)out.push(c); ci++; }
+    cards=out;
+  } else {
+    cards=[...deck].sort(()=>Math.random()-0.5);
+  }
+  return cards.slice(0,10);
+}
+
+function startStudySession(mode){
+  if(mode==='cloze'){ startClozeSession(); return; }
+  if(mode==='mc'){ startMCSession(); return; }
+  if(mode==='pretest'){ startPretestSession(); return; }
+  if(mode==='confusion'){ startConfusionSessionIntro(); return; }
+  if(mode==='application'){ startApplicationSession(); return; }
+
+  const cards=buildCards(mode);
+  if(!cards.length){ showToast('No cards available'); return; }
+  currentSession={ cards, index:0, mode, results:[], phase:'read' };
+  showScreen('study');
+  setNav('hub');
+  goPhase('read');
+  renderStudyCard();
+  updateProgress();
+  showMemoryTip();
+}
+
+function renderStudyCard(){
+  const card=currentSession.cards[currentSession.index];
+  if(!card){ finishSession(); return; }
+  const s=getCardState(card.id);
+  const isNew=s.lastQuality===-1;
+  const daysSince=s.lastReviewed?(Date.now()-s.lastReviewed)/86400000:null;
+  const whyText=isNew?'🆕 First time seeing this':
+    s.lastQuality<=2?'⚠ Failed last recall':
+    daysSince&&daysSince>s.interval*0.7?'⏰ Approaching forgetting point':'🔁 Scheduled review';
+
+  document.getElementById('card-category').textContent=`${card.category} · ${card.chapter}`;
+  document.getElementById('card-title').textContent=card.title;
+  document.getElementById('card-body').textContent=card.detail;
+  const ex=document.getElementById('card-example');
+  const ext=document.getElementById('card-example-text');
+  if(card.example){ ex.style.display='block'; ext.textContent=card.example; }
+  else ex.style.display='none';
+
+  document.getElementById('recall-category').textContent=card.category;
+  document.getElementById('recall-q').textContent=card.question;
+  document.getElementById('recall-answer-text').textContent=card.answer;
+  document.getElementById('recall-detail').textContent=card.detail;
+  const reb=document.getElementById('recall-example-box');
+  const ret=document.getElementById('recall-example-text');
+  if(card.example){ reb.style.display='block'; ret.textContent=card.example; }
+  else reb.style.display='none';
+  document.getElementById('recall-why').textContent=whyText;
+  document.getElementById('recall-reveal').style.display='none';
+  document.getElementById('recall-reveal-btn-wrap').style.display='block';
+  document.getElementById('reveal-btn').style.display='block';
+  document.getElementById('recall-rating').style.display='none';
+  document.getElementById('elab-prompt').style.display='none';
+  document.getElementById('study-mode-name').textContent=currentSession.mode==='due'?'Daily Review':currentSession.mode==='weak'?'Rescue Session':currentSession.mode==='interleave'?'Interleaved':'Review';
+}
+
+function updateProgress(){
+  const total=currentSession.cards.length, idx=currentSession.index;
+  const pct=total?Math.round(idx/total*100):0;
+  document.getElementById('study-bar').style.width=pct+'%';
+  document.getElementById('study-counter').textContent=`${idx+1} / ${total}`;
+}
+
+function showMemoryTip(){
+  const el=document.getElementById('memory-tip');
+  if(el) el.textContent=MEMORY_TIPS[Math.floor(Math.random()*MEMORY_TIPS.length)];
+}
+
+function goPhase(phase){
+  ['read','recall','cloze','mc','pretest-intro','confusion-intro','confusion','application','complete'].forEach(p=>{
+    const el=document.getElementById('phase-'+p);
+    if(el) el.style.display='none';
+  });
+  const el=document.getElementById('phase-'+phase);
+  if(el) el.style.display='block';
+  currentSession.phase=phase;
+}
+
+function revealAnswer(){
+  document.getElementById('recall-reveal').style.display='block';
+  document.getElementById('reveal-btn').style.display='none';
+  document.getElementById('recall-rating').style.display='grid';
+  // Show elaboration 50% of the time for must-know cards
+  const card=currentSession.cards[currentSession.index];
+  if(card&&card.tier==='must'&&Math.random()>0.5){
+    const elabEl=document.getElementById('elab-prompt');
+    const q=document.getElementById('elab-q');
+    const qs=['How would you explain this to a colleague in one sentence?','Where could this have helped you in the last 6 months?','What does this idea challenge about something you believed before?','If you could apply only this idea today, what would you do differently?'];
+    q.textContent=qs[Math.floor(Math.random()*qs.length)];
+    elabEl.style.display='block';
+  }
+}
+
+function rateCard(quality){
+  const card=currentSession.cards[currentSession.index];
+  if(!card) return;
+  const s=getCardState(card.id);
+  const newState=sm2(s,quality);
+  saveCardState(card.id,newState);
+  currentSession.results.push({id:card.id,quality});
+  logStudyHistory(1);
+  currentSession.index++;
+  if(currentSession.index>=currentSession.cards.length){ finishSession(); return; }
+  updateProgress();
+  showMemoryTip();
+  renderStudyCard();
+  goPhase('read');
+}
+
+function nextCard(){
+  currentSession.index++;
+  if(currentSession.index>=currentSession.cards.length){ finishSession(); return; }
+  updateProgress();
+  renderStudyCard();
+  goPhase('read');
+}
+
+function finishSession(){
+  const results=currentSession.results;
+  const correct=results.filter(r=>r.quality>=4).length;
+  const hard=results.filter(r=>r.quality<3).length;
+  const streak=parseInt(localStorage.getItem('bb_streak')||'0')+1;
+  localStorage.setItem('bb_streak',String(streak));
+  document.getElementById('cs-correct').textContent=correct;
+  document.getElementById('cs-hard').textContent=hard;
+  document.getElementById('cs-streak').textContent=streak;
+  document.getElementById('complete-sub').textContent=`You reviewed ${results.length} ideas. ${correct} are stronger. ${hard} need more work.`;
+  goPhase('complete');
+  renderHub();
+}
+
+function exitStudy(){
+  goToHub();
+  setNav('hub');
+}
+
+function saveToMemory(){ showToast('Saved to memory layer ✓'); }
+
+function logStudyHistory(n){
+  const h=JSON.parse(localStorage.getItem('bb_study_history')||'{}');
+  const k=new Date().toDateString();
+  h[k]=(h[k]||0)+n;
+  localStorage.setItem('bb_study_history',JSON.stringify(h));
+}
+
+// ─── CLOZE ───
+const CLOZE_CARDS = [
+  { id:'cl_01',category:'Principle',sentence:'The rule of <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="reciprocation">___</span> is so powerful that it overrides whether we actually <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="like the person">___</span> who gave us the gift.',ctx:'This means influence through giving works even in adversarial relationships.' },
+  { id:'cl_02',category:'Tactic',sentence:'The <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="foot-in-the-door">___</span> works because the first commitment changes your <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="self-image">___</span>, not just your behavior.',ctx:'Once you see yourself as "someone who supports X," subsequent asks feel internally consistent.' },
+  { id:'cl_03',category:'Principle',sentence:'Social proof is most dangerous when you are <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="most uncertain">___</span> — which is exactly when you need <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="independent judgment">___</span> most.',ctx:'Uncertainty is the condition that makes social proof both most compelling and most manipulable.' },
+  { id:'cl_04',category:'Principle',sentence:'Scarcity works through <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="psychological reactance">___</span> — when our freedom to have something is <span class="cloze-blank" onclick="revealClozeBlank(this)" data-answer="threatened">___</span>, we desire it more intensely.',ctx:'Loss aversion amplifies this: we hate losing access more than we enjoy having it.' }
+];
+let clozeIndex=0;
+
+function startClozeSession(){
+  clozeIndex=0;
+  showScreen('study');
+  goPhase('cloze');
+  document.getElementById('study-mode-name').textContent='Cloze Deletion';
+  renderClozeCard();
+  document.getElementById('study-bar').style.width='0%';
+  document.getElementById('study-counter').textContent=`1 / ${CLOZE_CARDS.length}`;
+}
+
+function renderClozeCard(){
+  const card=CLOZE_CARDS[clozeIndex];
+  if(!card){ finishSession(); return; }
+  document.getElementById('cloze-cat').textContent=card.category;
+  document.getElementById('cloze-sentence').innerHTML=card.sentence;
+  document.getElementById('cloze-ctx').textContent=card.ctx||'';
+  document.getElementById('study-bar').style.width=Math.round(clozeIndex/CLOZE_CARDS.length*100)+'%';
+  document.getElementById('study-counter').textContent=`${clozeIndex+1} / ${CLOZE_CARDS.length}`;
+}
+
+function revealClozeBlank(el){
+  el.textContent=el.getAttribute('data-answer');
+  el.classList.add('revealed');
+}
+function revealCloze(){
+  document.querySelectorAll('#cloze-sentence .cloze-blank').forEach(b=>{
+    b.textContent=b.getAttribute('data-answer');
+    b.classList.add('revealed');
+  });
+}
+function nextCloze(){ clozeIndex++; if(clozeIndex>=CLOZE_CARDS.length){finishSession();return;} renderClozeCard(); }
+
+// ─── MULTIPLE CHOICE ───
+const MC_CARDS = [
+  { id:'mc_01',question:'Which influence principle is most dangerous precisely when you are most uncertain?',options:['Reciprocity','Authority','Social Proof','Scarcity'],correct:2,explanation:'Social Proof is a shortcut that relies on others\' behavior as evidence of correct action. Uncertainty is its optimal trigger condition — and also when independent judgment matters most.' },
+  { id:'mc_02',question:'Why does the Rejection-Then-Retreat technique work even better than simply asking for the smaller thing first?',options:['Because it flatters the target','Because it fires both reciprocity AND contrast simultaneously','Because it signals authority','Because it creates social proof'],correct:1,explanation:'Two principles fire at once: the concession triggers a reciprocity obligation ("they gave up something"), AND the smaller request seems reasonable by contrast with the large one.' },
+  { id:'mc_03',question:'What does a foot-in-the-door compliance actually change, psychologically?',options:['The target\'s mood','The target\'s self-image and identity','The target\'s relationship with authority','The social proof around the request'],correct:1,explanation:'The mechanism isn\'t mood or rational persuasion — it\'s identity. The first "yes" rewrites how the person sees themselves, making subsequent aligned requests feel internally consistent.' },
+  { id:'mc_04',question:'Reciprocity creates compliance even when the gift was uninvited. Why?',options:['People feel guilty otherwise','The rule of reciprocation is automatic, not relationship-dependent','The gift signals authority','It creates a form of social proof'],correct:1,explanation:'The trigger is the act of giving, not the relationship. The felt obligation fires regardless of whether you like the giver — which is why it can be weaponized by strangers.' }
+];
+let mcIndex=0,mcAnswered=false;
+
+function startMCSession(){
+  mcIndex=0; mcAnswered=false;
+  showScreen('study');
+  goPhase('mc');
+  document.getElementById('study-mode-name').textContent='Multiple Choice';
+  renderMCCard();
+  document.getElementById('study-bar').style.width='0%';
+  document.getElementById('study-counter').textContent=`1 / ${MC_CARDS.length}`;
+}
+
+function renderMCCard(){
+  const card=MC_CARDS[mcIndex];
+  if(!card){finishSession();return;}
+  mcAnswered=false;
+  document.getElementById('mc-question').textContent=card.question;
+  document.getElementById('mc-explanation').className='mc-explain';
+  document.getElementById('mc-next-btn').style.display='none';
+  document.getElementById('mc-options').innerHTML=card.options.map((o,i)=>`
+    <button class="mc-opt" onclick="selectMC(${i},${card.correct},'${card.id}')">
+      <div class="mc-letter">${'ABCD'[i]}</div>${o}
+    </button>`).join('');
+  document.getElementById('study-bar').style.width=Math.round(mcIndex/MC_CARDS.length*100)+'%';
+  document.getElementById('study-counter').textContent=`${mcIndex+1} / ${MC_CARDS.length}`;
+}
+
+function selectMC(idx,correct,cardId){
+  if(mcAnswered) return; mcAnswered=true;
+  const opts=document.querySelectorAll('.mc-opt');
+  opts.forEach((o,i)=>{
+    o.classList.add('disabled');
+    if(i===correct) o.classList.add('correct');
+    else if(i===idx) o.classList.add('wrong');
+  });
+  const card=MC_CARDS.find(c=>c.id===cardId);
+  if(card){ const ex=document.getElementById('mc-explanation'); ex.textContent=card.explanation; ex.classList.add('show'); }
+  document.getElementById('mc-next-btn').style.display='block';
+  const quality=idx===correct?4:1;
+  const s=getCardState(cardId);
+  saveCardState(cardId,sm2(s,quality));
+  logStudyHistory(1);
+}
+function nextMC(){ mcIndex++; if(mcIndex>=MC_CARDS.length){finishSession();return;} renderMCCard(); }
+
+// ─── PRETEST ───
+function startPretestSession(){
+  showScreen('study');
+  goPhase('pretest-intro');
+  document.getElementById('study-mode-name').textContent='Pre-Test';
+  document.getElementById('study-bar').style.width='0%';
+  document.getElementById('study-counter').textContent='–';
+  currentSession.cards=[...getMustKnowCards()].sort(()=>Math.random()-0.5).slice(0,6);
+  currentSession.index=0; currentSession.mode='pretest'; currentSession.results=[];
+}
+function startPretestCards(){ goPhase('recall'); renderStudyCard(); updateProgress(); }
+
+// ─── CONFUSION ───
+let confusionIndex=0;
+
+function startConfusionSessionIntro(){
+  showScreen('study');
+  goPhase('confusion-intro');
+  document.getElementById('study-mode-name').textContent='Confusion Trainer';
+  confusionIndex=0;
+}
+
+function startConfusionSession(){
+  goPhase('confusion');
+  renderConfusionCard();
+}
+
+function renderConfusionCard(){
+  const pairs=state.currentConfusionPairs||CONFUSION_PAIRS;
+  const pair=pairs[confusionIndex];
+  if(!pair){ finishSession(); return; }
+  const el=document.getElementById('phase-confusion');
+  el.innerHTML=`<div class="confusion-card">
+    <div class="confusion-label">◈ Confusion Pair ${confusionIndex+1} of ${pairs.length}</div>
+    <div style="font-weight:600;font-size:0.95rem;margin-bottom:10px">${pair.a} vs. ${pair.b}</div>
+    <div style="font-size:0.82rem;color:var(--rose);margin-bottom:14px;line-height:1.5">Risk: ${pair.risk}</div>
+    <div class="confusion-pair">
+      <div class="confusion-side"><div class="confusion-side-title">${pair.a}</div><div class="confusion-side-text">${pair.aText||''}</div></div>
+      <div class="confusion-side"><div class="confusion-side-title">${pair.b}</div><div class="confusion-side-text">${pair.bText||''}</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="nextConfusion()" style="flex:1">I understand the difference →</button>
+      <button class="btn btn-secondary" onclick="markConfusionHard()">Still confused</button>
+    </div>
+  </div>`;
+  document.getElementById('study-bar').style.width=Math.round(confusionIndex/pairs.length*100)+'%';
+  document.getElementById('study-counter').textContent=`${confusionIndex+1} / ${pairs.length}`;
+}
+
+function nextConfusion(){ logStudyHistory(1); confusionIndex++; renderConfusionCard(); }
+function markConfusionHard(){ showToast('Flagged for re-training'); logStudyHistory(1); confusionIndex++; renderConfusionCard(); }
+
+// ─── APPLICATION ───
+let transferIndex=0;
+
+function startApplicationSession(){
+  transferIndex=0;
+  showScreen('study');
+  goPhase('application');
+  document.getElementById('study-mode-name').textContent='Application Drill';
+  renderTransferCard();
+}
+
+function renderTransferCard(){
+  const prompts=state.currentTransferPrompts||TRANSFER_PROMPTS;
+  const prompt=prompts[transferIndex];
+  if(!prompt){ finishSession(); return; }
+  document.getElementById('transfer-prompt').textContent=prompt.prompt;
+  document.getElementById('transfer-answer').value='';
+  document.getElementById('study-bar').style.width=Math.round(transferIndex/prompts.length*100)+'%';
+  document.getElementById('study-counter').textContent=`${transferIndex+1} / ${prompts.length}`;
+}
+
+function submitTransfer(){
+  const answer=document.getElementById('transfer-answer').value.trim();
+  if(!answer){showToast('Write something — even a rough attempt counts');return;}
+  showToast('Saved ✓');
+  logStudyHistory(1);
+  transferIndex++;
+  const prompts=state.currentTransferPrompts||TRANSFER_PROMPTS;
+  if(transferIndex>=prompts.length){ finishSession(); return; }
+  renderTransferCard();
+}
+function nextTransfer(){ transferIndex++; const prompts=state.currentTransferPrompts||TRANSFER_PROMPTS; if(transferIndex>=prompts.length){finishSession();return;} renderTransferCard(); }
+
+// ═══════════════════════════════════════════
+// MEMORY LAYER (NOTES)
+// ═══════════════════════════════════════════
+function renderMemoryNotes(filter='all'){
+  const el=document.getElementById('memory-notes-list');
+  const empty=document.getElementById('memory-empty');
+  let notes=state.memoryNotes;
+  if(filter!=='all') notes=notes.filter(n=>n.type===filter);
+  if(!notes.length){ el.innerHTML=''; if(empty) empty.style.display='block'; return; }
+  if(empty) empty.style.display='none';
+  const typeColors={'self-explain':'var(--gold)','teach-back':'var(--sage)','application':'var(--blue)','confusion':'var(--rose)','decision':'rgba(200,160,220,0.8)'};
+  const typeLabels={'self-explain':'Self-Explanation','teach-back':'Teach-Back','application':'Application','confusion':'Confusion Note','decision':'Decision Use'};
+  el.innerHTML=notes.slice().reverse().map(n=>`<div class="memory-note">
+    <div class="memory-note-type" style="color:${typeColors[n.type]||'var(--muted)'}">◈ ${typeLabels[n.type]||n.type}</div>
+    <div class="memory-note-text">${n.text}</div>
+    <div class="memory-note-book">${n.book||'General'} · ${new Date(n.ts).toLocaleDateString()}</div>
+  </div>`).join('');
+}
+
+function saveMemoryNote(){
+  const text=document.getElementById('note-input').value.trim();
+  if(!text){showToast('Write something first');return;}
+  const type=document.getElementById('note-type-select').value;
+  const note={id:'note_'+Date.now(),text,type,book:state.currentBook?.name||'General',ts:Date.now()};
+  state.memoryNotes.push(note);
+  localStorage.setItem('bb_memory_notes',JSON.stringify(state.memoryNotes));
+  document.getElementById('note-input').value='';
+  renderMemoryNotes();
+  showToast('Memory note saved ✓');
+}
+
+function filterNotes(f,el){
+  document.querySelectorAll('.memory-note-tabs .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderMemoryNotes(f);
+}
+
+// ═══════════════════════════════════════════
+// MEMORY COACH (CHAT)
+// ═══════════════════════════════════════════
+const COACH_RESPONSES = {
+  quiz:'Let\'s test your recall. Without looking anything up: What are Cialdini\'s 6 principles — and which one works even when you dislike the person? Take your time.',
+  simplify:'Here\'s the core of Influence in one sentence: People use mental shortcuts to decide, and six patterns trigger those shortcuts so reliably that once you know them, you see them everywhere. Which one do you want to go deeper on?',
+  misremember:'Most likely: confusing Reciprocity with Liking. Both feel warm, but Reciprocity is mechanical — it creates obligation even from people you dislike. Liking is preference-based. The other common mix-up: Foot-in-the-Door vs. Lowball — both use escalating commitment, but in opposite directions.',
+  scenario:'You\'re in a meeting, and a colleague volunteers to help you with your project. You feel obligated to return the favor — even though you\'re too busy. Which principle just fired? What\'s the smart move?',
+  contrast:'Tell me which two concepts you want to contrast, and I\'ll map the critical difference. Try: Commitment vs. Social Proof, or Reciprocity vs. Liking.',
+  teach:'Great. Pick the concept you feel shakiest on, and explain it to me as if I\'ve never heard of it. I\'ll probe your explanation and flag anything that sounds imprecise.',
+  apply:'What\'s a situation from your work or life where you could apply what you\'ve learned? Tell me the context, and I\'ll suggest the specific principles at play.',
+  rescue:'Tell me which concept you keep getting wrong, and I\'ll give you a new angle, a new example, and a cue that makes it stick. Don\'t hold back — the confusion is the starting point.'
+};
+
+function initChat(){
+  const msgs=document.getElementById('chat-messages');
+  if(!msgs||msgs.children.length) return;
+  addChatMsg('ai','I\'m your memory coach for this book. I don\'t summarize — I help you test, apply, and genuinely lock in what you\'ve read. Choose a mode above or ask me anything.');
+}
+
+function useCoachMode(mode){
+  const resp=COACH_RESPONSES[mode];
+  if(!resp) return;
+  document.querySelectorAll('.coach-mode-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.coach-mode-btn[onclick*="${mode}"]`)?.classList.add('active');
+  const modeLabels={quiz:'Quiz me on weak ideas',simplify:'Simplify this',misremember:'What will I misremember?',scenario:'Real-world scenario',contrast:'Contrast two ideas',teach:'Help me teach this back',apply:'Apply to my work',rescue:'Rescue a weak concept'};
+  addChatMsg('user',modeLabels[mode]||mode);
+  setTimeout(()=>addChatMsg('ai',resp),400);
+}
+
+function addChatMsg(from,text){
+  const msgs=document.getElementById('chat-messages');
+  if(!msgs) return;
+  const div=document.createElement('div');
+  div.className=`chat-msg ${from}`;
+  div.innerHTML=`<div class="chat-msg-from">${from==='ai'?'◈ Memory Coach':'You'}</div>${text}`;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text) return;
+  addChatMsg('user',text);
+  input.value='';
+  const apiKey=state.apiKey;
+  if(!apiKey){
+    setTimeout(()=>{
+      const fallbacks=['That\'s a thoughtful question. Try the elaboration approach: explain your current understanding, then I\'ll identify the gap.','Good. Before I answer — what\'s your best guess? Attempting to recall first makes my explanation stick better.','Let me push back on that. What evidence from the book supports your interpretation?','Interesting angle. Can you connect that to one of the 6 principles directly? Which one is most relevant here?'];
+      addChatMsg('ai',fallbacks[Math.floor(Math.random()*fallbacks.length)]);
+    },500);
+    return;
+  }
+  try {
+    const bookName=state.currentBook?.name||'the uploaded book';
+    const sysPrompt=`You are a memory coach for the book "${bookName}". You are NOT a book chatbot. You are a memory coach whose job is to help the user test their recall, apply concepts to real situations, and lock in durable understanding. Never just summarize. Instead: quiz the user, challenge their understanding, help them make connections, spot confusion, and push transfer. Keep responses concise and coaching-oriented. Profile: ${state.readerProfile}.`;
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:400,
+        system:sysPrompt,
+        messages:[...state.chatHistory,{role:'user',content:text}]
+      })
+    });
+    if(!response.ok){ addChatMsg('ai','API error '+response.status+'. Check your key in Settings.'); return; }
+    const data=await response.json();
+    const reply=data.content?.[0]?.text||'I had trouble responding. Try rephrasing.';
+    state.chatHistory.push({role:'user',content:text},{role:'assistant',content:reply});
+    addChatMsg('ai',reply);
+  } catch(e){ addChatMsg('ai','Connection issue. Add your Claude API key in Settings to enable full coaching.'); }
+}
+
+function handleChatKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendChat(); } }
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function loadSettings(){
+  const s=state.settings;
+  Object.keys(s).forEach(k=>{ const el=document.getElementById('toggle-'+k); if(el){ if(s[k]) el.classList.add('on'); else el.classList.remove('on'); } });
+  setProfile(state.readerProfile,false);
+}
+
+function toggleSetting(k){
+  state.settings[k]=!state.settings[k];
+  const el=document.getElementById('toggle-'+k);
+  if(el) el.classList.toggle('on',state.settings[k]);
+  localStorage.setItem('bb_settings',JSON.stringify(state.settings));
+}
+
+function setProfile(p,save=true){
+  state.readerProfile=p;
+  if(save) localStorage.setItem('bb_profile',p);
+  document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('active'));
+  const el=document.getElementById('profile-'+p);
+  if(el) el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// CONCEPT MAP
+// ═══════════════════════════════════════════
+const NODES = [
+  {id:'core',label:'Influence',type:'center',x:50,y:46},
+  {id:'recip',label:'Reciprocity',type:'principle',x:14,y:16},
+  {id:'commit',label:'Commitment',type:'principle',x:83,y:14},
+  {id:'social',label:'Social Proof',type:'principle',x:10,y:72},
+  {id:'auth',label:'Authority',type:'principle',x:86,y:72},
+  {id:'liking',label:'Liking',type:'principle',x:50,y:90},
+  {id:'scarcity',label:'Scarcity',type:'principle',x:20,y:44},
+  {id:'unity',label:'Unity',type:'principle',x:80,y:44},
+  {id:'retreat',label:'Reject-Retreat',type:'tactic',x:75,y:28},
+  {id:'foot',label:'Foot-in-Door',type:'tactic',x:62,y:20},
+  {id:'lowball',label:'Lowball',type:'tactic',x:38,y:20},
+  {id:'contrast',label:'Contrast',type:'tactic',x:30,y:62},
+  {id:'def-r',label:'Relabel Gifts',type:'defense',x:5,y:30},
+  {id:'def-s',label:'Pause Urgency',type:'defense',x:5,y:58},
+  {id:'def-a',label:'Verify Expert',type:'defense',x:93,y:58},
+];
+const EDGES=[['core','recip'],['core','commit'],['core','social'],['core','auth'],['core','liking'],['core','scarcity'],['core','unity'],['recip','retreat'],['commit','foot'],['commit','lowball'],['scarcity','contrast'],['recip','def-r'],['scarcity','def-s'],['auth','def-a']];
+
+function renderConceptMap(){
+  const canvas=document.getElementById('concept-canvas');
+  const svg=document.getElementById('concept-svg');
+  if(!canvas||!svg) return;
+  canvas.querySelectorAll('.concept-node').forEach(n=>n.remove());
+  const W=canvas.offsetWidth||320,H=canvas.offsetHeight||260;
+  svg.innerHTML=EDGES.map(([a,b])=>{
+    const na=NODES.find(n=>n.id===a),nb=NODES.find(n=>n.id===b);
+    if(!na||!nb) return '';
+    const thin=na.type!=='center'&&nb.type!=='center';
+    return `<line x1="${(na.x/100)*W}" y1="${(na.y/100)*H}" x2="${(nb.x/100)*W}" y2="${(nb.y/100)*H}" stroke="rgba(255,255,255,${thin?0.05:0.09})" stroke-width="${thin?1:1.5}" stroke-dasharray="${thin?'3,4':'none'}"/>`;
+  }).join('');
+  NODES.forEach(node=>{
+    const el=document.createElement('div');
+    el.className=`concept-node ${node.type}`;
+    el.style.cssText=`left:calc(${node.x}% - 44px);top:calc(${node.y}% - 13px);width:88px`;
+    el.textContent=node.label;
+    el.onclick=()=>showToast(`${node.label} — tap in Coach to explore`);
+    canvas.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════
+function showToast(msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity 0.3s'; },2200);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// Fix syntax error in prime action
+document.addEventListener('DOMContentLoaded',()=>{
+  // patch prime all-caught-up text
+});
+</script>
+</body>
+</html>
