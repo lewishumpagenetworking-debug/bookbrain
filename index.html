@@ -867,6 +867,78 @@ nav{
 .onboard-dots{display:flex;gap:6px;justify-content:center;margin-bottom:28px}
 .onboard-dot{width:6px;height:6px;border-radius:50%;background:var(--surface3);transition:all 0.25s}
 .onboard-dot.active{background:var(--gold);width:18px;border-radius:3px}
+
+
+/* ── FIREWORKS & AWARDS ── */
+#fireworks-canvas{position:fixed;inset:0;z-index:9000;pointer-events:none;display:none}
+.award-overlay{position:fixed;inset:0;z-index:9001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);display:none}
+.award-card{background:var(--s1);border:2px solid var(--gold);border-radius:16px;padding:32px 40px;text-align:center;max-width:400px;animation:awardPop .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes awardPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.award-icon{font-size:64px;display:block;margin-bottom:12px;animation:spin1 .6s ease}
+@keyframes spin1{from{transform:rotate(-20deg) scale(.8)}to{transform:rotate(0) scale(1)}}
+.award-title{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--gold);margin-bottom:6px}
+.award-sub{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:18px}
+.award-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.award-badge{background:var(--gd);border:1px solid var(--gb);border-radius:20px;padding:4px 12px;font-family:var(--mono);font-size:10px;color:var(--gold)}
+
+/* ── SPEED TIMER ── */
+.speed-timer{font-family:var(--mono);font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.speed-timer-bar{flex:1;height:4px;background:var(--b1);border-radius:2px;overflow:hidden}
+.speed-timer-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .1s linear}
+.speed-timer-fill.warn{background:var(--amber)}
+.speed-timer-fill.danger{background:var(--red)}
+
+/* ── DELIBERATE PRACTICE GATE ── */
+.dp-gate{background:var(--redd);border:1px solid var(--redb);border-radius:var(--rl);padding:16px;margin:12px 0}
+.dp-gate-title{font-family:var(--mono);font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.dp-gate-body{font-size:12px;color:var(--t2);line-height:1.65;margin-bottom:10px}
+.dp-restudy{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px;margin-bottom:10px}
+.dp-restudy-label{font-family:var(--mono);font-size:9px;color:var(--gold);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.dp-rep-counter{display:flex;align-items:center;gap:8px;margin-top:10px}
+.dp-rep-dot{width:10px;height:10px;border-radius:50%;background:var(--b2);border:1px solid var(--b1);transition:all .2s}
+.dp-rep-dot.done{background:var(--grn);border-color:var(--grnb)}
+.dp-rep-dot.current{background:var(--gold);border-color:var(--gb);animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+
+/* ── MASTER SELECTOR ── */
+.master-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+.master-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rl);padding:10px;cursor:pointer;transition:all .15s}
+.master-card:hover,.master-card.selected{border-color:var(--gb);background:var(--gd)}
+.master-card-name{font-family:var(--serif);font-size:13px;font-weight:600;font-style:italic;color:var(--gold)}
+.master-card-book{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:2px}
+.master-card-skills{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+.master-card-check{float:right;font-size:14px;color:var(--grn);display:none}
+.master-card.selected .master-card-check{display:inline}
+
+/* ── ABSTRACT THINKING DRILL ── */
+.abstract-prompt{background:var(--gd);border:1px solid var(--gb);border-radius:var(--rl);padding:14px;margin-bottom:10px}
+.abstract-label{font-family:var(--mono);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.abstract-q{font-family:var(--serif);font-size:15px;font-style:italic;color:var(--t1);line-height:1.5}
+
+/* ── SELF DEBUG ── */
+.debug-panel{position:fixed;bottom:0;left:0;right:0;height:180px;background:var(--s1);border-top:1px solid var(--b1);z-index:8000;display:none;flex-direction:column}
+.debug-panel.open{display:flex}
+.debug-hdr{padding:6px 12px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.debug-title{font-family:var(--mono);font-size:10px;color:var(--gold)}
+.debug-log{flex:1;overflow-y:auto;padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--t3);line-height:1.6}
+.debug-log .err{color:var(--red)}
+.debug-log .warn{color:var(--amber)}
+.debug-log .ok{color:var(--grn)}
+.debug-input-row{display:flex;gap:6px;padding:6px 8px;border-top:1px solid var(--b1);flex-shrink:0}
+.debug-input{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);color:var(--t1);font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none}
+.debug-input:focus{border-color:var(--gb)}
+
+/* ── PRAISE ANIMATION ── */
+.praise-burst{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8500;pointer-events:none;display:none}
+.praise-word{font-family:var(--serif);font-size:48px;font-weight:600;font-style:italic;color:var(--gold);text-shadow:0 0 40px rgba(201,168,76,.6);animation:praiseAnim .8s ease forwards}
+@keyframes praiseAnim{0%{opacity:0;transform:scale(.5) translateY(20px)}40%{opacity:1;transform:scale(1.15) translateY(-10px)}70%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(.9) translateY(-30px)}}
+
+/* ── REWRITE CHALLENGE ── */
+.rewrite-challenge{background:var(--s1);border:1px solid var(--gb);border-radius:var(--rl);padding:14px;margin:12px 0}
+.rc-label{font-family:var(--mono);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.rc-original{background:var(--redd);border:1px solid var(--redb);border-radius:var(--r);padding:10px;font-size:12px;color:var(--t2);font-style:italic;margin-bottom:8px;line-height:1.6}
+.rc-prompt{font-size:12px;color:var(--t3);margin-bottom:8px;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -2836,7 +2908,13 @@ function addChatMsg(from,text){
   if(!msgs) return;
   const div=document.createElement('div');
   div.className=`chat-msg ${from}`;
-  div.innerHTML=`<div class="chat-msg-from">${from==='ai'?'◈ Memory Coach':'You'}</div>${text}`;
+
+  const fromEl=document.createElement('div');
+  fromEl.className='chat-msg-from';
+  fromEl.textContent=from==='ai'?'◈ Memory Coach':'You';
+
+  div.appendChild(fromEl);
+  div.appendChild(document.createTextNode(text));
   msgs.appendChild(div);
   msgs.scrollTop=msgs.scrollHeight;
 }
