@@ -1,6 +1,6 @@
 # BookBrain
 
-BookBrain is a single-page web app for turning books into durable study material.
+BookBrain is a single-page web app for turning Direct response Principles into durable study material.
 
 ## What it does
 
